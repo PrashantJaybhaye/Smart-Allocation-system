@@ -27,7 +27,7 @@ if not app.config['SECRET_KEY']:
         # Generate a random one if missing in prod (safer than hardcoded)
         app.config['SECRET_KEY'] = os.urandom(24).hex()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///smart_allocation.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 app.config['OUTPUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
 
@@ -352,6 +352,5 @@ def init_db_command():
     
     print("Database initialized successfully.")
 
-if __name__ == '__main__':
-    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
-    app.run(debug=debug_mode)
+if __name__ == "__main__":
+    app.run()

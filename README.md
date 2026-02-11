@@ -1,17 +1,22 @@
 # Smart Student Course Allocation System 🎓
 
-A robust, secure, and modern web application built with Flask for automating the course allocation process for students based on their preferences, GPA, and time of submission.
+A robust, secure, and modern web application built with Flask for automating the course allocation process for students. The system ensures fairness and efficiency by using a priority-based matching algorithm.
 
 ---
 
 ## 🚀 Features
 
-- **Priority-Based Allocation**: Intelligent engine that considers GPA, submission time, and student preferences.
-- **Student & Admin Dashboards**: Separate interfaces with glassmorphic design and real-time feedback.
-- **Security First**: CSRF protection, password hashing (scrypt), and environment-based configuration.
-- **Advanced Analytics**: Interactive charts showing course demand vs. occupancy.
-- **Automated Reporting**: Export results to Excel and professional PDF reports.
-- **Flexible Controls**: Admin can toggle preference re-submission and reset system data.
+- **Intelligent Allocation Engine**:
+  - **Priority Sorting**: Students are ranked based on **GPA (descending)** and **Submission Timestamp (ascending)**.
+  - **Preference Matching**: Automatically assigns students to their highest available choice based on course capacity.
+- **Modern UI/UX**: Responsive dashboard with glassmorphism design, real-time analytics, and smooth transitions.
+- **Security First**:
+  - CSRF protection on all forms.
+  - Password hashing via `scrypt`.
+  - Admin-only access controlled by environment-based authentication.
+- **Interactive Analytics**: Visualized course demand and occupancy rates.
+- **Comprehensive Reporting**: Export allocation results to **Excel** or professional **PDF** formats.
+- **Admin Control Panel**: Toggle preference edits, reset system state, and manage course capacities.
 
 ---
 
@@ -19,34 +24,30 @@ A robust, secure, and modern web application built with Flask for automating the
 
 Before you begin, ensure you have the following installed:
 
-- **Python 3.13+** (Recommended)
+- **Python 3.12+**
 - **Git**
 
 ---
 
 ## ⚙️ Installation & Setup (Step-by-Step)
 
-Follow these steps to get the project running on a new machine:
-
 ### 1. Clone the Repository
 
-Open your terminal or PowerShell and run:
-
-```bash
+```powershell
 git clone <your-repo-url>
 cd SmartCourseAllocation
 ```
 
-### 2. Set Up a Virtual Environment (Recommended)
+### 2. Set Up a Virtual Environment
 
-Windows:
+**Windows:**
 
 ```powershell
 python -m venv venv
 .\venv\Scripts\activate
 ```
 
-macOS/Linux:
+**macOS/Linux:**
 
 ```bash
 python3 -m venv venv
@@ -55,73 +56,78 @@ source venv/bin/activate
 
 ### 3. Install Dependencies
 
-Install the required packages. Note: The `requirements.txt` is optimized for Python 3.13.
-
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment (Optional)
+### 4. Initialize the Database
 
-The system has built-in defaults for local development. If you need custom settings (like a specific admin password), you can create a `.env` file:
+This creates the SQLite database and sets up the default admin account.
 
-```bash
-# Optional: Create a .env file to override defaults
-SECRET_KEY=your-secure-key
-ADMIN_PASSWORD=your-password
-```
-
-_Open `.env` and update the `SECRET_KEY` and `ADMIN_PASSWORD` to your liking._
-
-### 5. Initialize the Database
-
-This step creates the tables and sets up the default admin account (`admin` / `admin123`).
-
-```bash
+```powershell
 $env:FLASK_APP="app.py"
 python -m flask init-db
 ```
 
-### 6. Run the Application
+### 5. Run the Application (Development)
 
-Start the Flask development server:
-
-```bash
+```powershell
 python -m flask run
 ```
+
+_Visit **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser._
+
+---
+
+## 🌐 Production Deployment
+
+For production environments, it is recommended to use a WSGI server like **Gunicorn**.
+
+### Running with Gunicorn
+
+```powershell
+gunicorn -w 4 -b 0.0.0.0:8000 app:app
+```
+
+- `-w 4`: Number of worker processes.
+- `-b 0.0.0.0:8000`: Binds the app to all interfaces on port 8000.
 
 ---
 
 ## 🔑 Accessing the System
 
-Once the server is running, visit **[http://127.0.0.1:5000](http://127.0.0.1:5000)**.
-
-### Admin Login
+### Admin Credentials
 
 - **Username**: `admin`
-- **Password**: _The `ADMIN_PASSWORD` you set in `.env` (Default: `admin123`)_
+- **Password**: Defined in your `.env` file (Default: `admin123`)
 
 ### Student Access
 
-- Students must **Register** first through the registration page.
-- By default, newly registered accounts are assigned the `student` role.
+- Students must register via the **Registration** page.
+- Once registered, they can login and submit their course preferences.
 
 ---
 
 ## 📂 Project Structure
 
-- `app.py`: Main application controller and routes.
-- `models.py`: Database models (User, Student, Course, Config).
-- `allocation_engine.py`: Logic for the priority-matching algorithm.
-- `data_processor.py`: CSV/Excel file handling and validation.
-- `report_generator.py`: PDF and Excel export logic.
-- `templates/`: HTML templates with modern glassmorphism UI.
-- `static/index.css`: Custom CSS for premium styling.
+- `app.py`: Main controller, routing, and Flask application factory.
+- `models.py`: Database schema (Users, Students, Courses, Config).
+- `allocation_engine.py`: Core logic for priority-matching and analytics.
+- `data_processor.py`: Logic for parsing CSV/Excel uploads and validation.
+- `report_generator.py`: Generates PDF and Excel export files.
+- `templates/`: Jinja2 templates for the modern frontend.
+- `static/index.css`: Custom CSS variables and styles.
 
 ---
 
-## ⚠️ Known Issues & Tips
+## ⚠️ Troubleshooting
 
-- **Compiler Errors during Install**: If `pandas` fails to install, ensure you are using Python 3.12 or 3.13 which have pre-compiled wheels for newer versions.
-- **Resetting Data**: Use the "Danger Zone" in the Admin dashboard carefully; it clears all student records while keeping user accounts intact.
-- **DB Initialization**: If you change the schema in `models.py`, delete the `instance/smart_allocation.db` file and run `flask init-db` again.
+- **"Term 'flask' is not recognized"**: On Windows, always use `python -m flask` instead of just `flask` if the command is not in your PATH.
+- **Dependency Issues**: Ensure you have `setuptools` updated (`pip install --upgrade setuptools`) if building `pandas` or `scikit-learn` from source.
+- **Database Reset**: To start fresh, delete `instance/smart_allocation.db` and run `python -m flask init-db` again.
+
+---
+
+## 📝 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
