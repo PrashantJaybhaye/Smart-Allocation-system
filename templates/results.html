@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocation Results - Smart Course Allocation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" style="max-width: 1100px;">
+        <header>
+            <h1>Allocation Results</h1>
+            <p class="subtitle">Summary of course distribution</p>
+        </header>
+
+        <div class="summary-grid">
+            <div class="stat-card">
+                <span class="stat-value">{{ summary.total_students }}</span>
+                <span class="stat-label">Total Students</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ summary.assigned_students }}</span>
+                <span class="stat-label">Successfully Assigned</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: var(--error);">{{ summary.unassigned_students }}</span>
+                <span class="stat-label">Unassigned</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0;">Detailed Allocations</h2>
+                <div>
+                    <a href="{{ url_for('download_file', type='excel') }}" class="btn">Download Excel</a>
+                    <a href="{{ url_for('download_file', type='pdf') }}" class="btn btn-secondary">Download PDF
+                        Report</a>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Home</a>
+                </div>
+            </div>
+
+            <div class="results-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            {% for i in range(1, pref_count + 1) %}
+                            <th>Pref {{ i }}</th>
+                            {% endfor %}
+                            <th>Allocated Course</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                        <tr>
+                            <td>{{ row.get('Student ID', '-') }}</td>
+                            <td>{{ row.get('Name', '-') }}</td>
+                            {% for i in range(1, pref_count + 1) %}
+                            <td>{{ row.get('Preference ' ~ i, '-') }}</td>
+                            {% endfor %}
+                            <td class="{{ 'unassigned' if row['Allocated Course'] == 'Unassigned' else '' }}">
+                                {{ row['Allocated Course'] }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
