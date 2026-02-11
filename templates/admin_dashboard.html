@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Smart Allocation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>Admin Console</h1>
+                <p class="subtitle">System Resource Management</p>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_results') }}" class="btn">View Results</a>
+                <form action="{{ url_for('logout') }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary">Logout</button>
+                </form>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+            <!-- Column 1: Manage Courses -->
+            <div class="card">
+                <h3>1. Setup Courses</h3>
+                <form action="{{ url_for('setup_courses') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="course-name"
+                            style="display: block; margin-bottom: 0.25rem; font-size: 0.9rem;">Course Name</label>
+                        <input type="text" id="course-name" name="name" placeholder="Course Name" required
+                            class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="seat-capacity"
+                            style="display: block; margin-bottom: 0.25rem; font-size: 0.9rem;">Seat Capacity</label>
+                        <input type="number" id="seat-capacity" name="capacity" min="1" placeholder="Seat Capacity"
+                            required class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem;">
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Add / Update Course</button>
+                </form>
+
+                <div style="margin-top: 1.5rem; max-height: 200px; overflow-y: auto;">
+                    <table style="font-size: 0.9rem;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Cap</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td>{{ course.name }}</td>
+                                <td>{{ course.capacity }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Column 2: Import Data -->
+            <div class="card">
+                <h3>2. Import Student Data</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Upload XLSX/CSV to bulk insert students and
+                    priorities.</p>
+                <form action="{{ url_for('upload_students') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="file-input" class="upload-area"
+                        style="padding: 1.5rem; cursor: pointer; display: block;" tabindex="0" role="button"
+                        onkeydown="if(event.key==='Enter'||event.key===' ')this.click()">
+                        <p id="file-name" style="margin: 0;">Click to upload sheet</p>
+                        <input type="file" name="file" id="file-input" class="file-input"
+                            onchange="if(this.files && this.files.length > 0) { document.getElementById('file-name').textContent = this.files[0].name; }">
+                    </label>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Upload & Import</button>
+                </form>
+
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <div class="stat-card" style="padding: 1rem;">
+                        <span class="stat-value">{{ students|length }}</span>
+                        <span class="stat-label">Students in System</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Section: Run Allocation -->
+        <div class="card" style="margin-top: 2rem; text-align: center; border: 2px solid var(--primary);">
+            <h3>3. Run Optimization Engine</h3>
+            <p>This will execute the priority-matching algorithm (GPA + Submission Time) for all active students.</p>
+            <form action="{{ url_for('run_allocation') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn" style="padding: 1rem 3rem; font-size: 1.2rem; margin-top: 1rem;">
+                    🚀 Start Automated Allocation
+                </button>
+            </form>
+        </div>
+
+        <!-- System Management & Reset Section -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+            <div class="card"
+                style="border-left: 5px solid {{ 'var(--success)' if allow_repref else 'var(--error)' }};">
+                <h3>System Preferences</h3>
+                <p style="font-size: 0.9rem;">Current Mode: <strong>{{ 'Flexible (Multiple Submissions)' if allow_repref
+                        else 'Strict (One-time Only)' }}</strong></p>
+                <form action="{{ url_for('toggle_repref') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn"
+                        style="width: 100%; {{ 'background: #64748b;' if allow_repref else '' }}">
+                        {{ 'Disable Repreference' if allow_repref else 'Enable Repreference' }}
+                    </button>
+                </form>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    If disabled, students can only set preferences once and cannot edit them.
+                </p>
+            </div>
+
+            <div class="card" style="border-left: 5px solid var(--error);">
+                <h3>Danger Zone</h3>
+                <p style="font-size: 0.9rem;">Delete all Students, Courses, and Allocation Results.</p>
+                <form action="{{ url_for('reset_data') }}" method="POST"
+                    onsubmit="return confirm('WARNING: This will permanently delete ALL students, courses, and results. Continue?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="confirm" value="yes">
+                    <button type="submit" class="btn" style="width: 100%; background: var(--error);">
+                        Reset System Data
+                    </button>
+                </form>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    Use this before starting a new allocation cycle.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

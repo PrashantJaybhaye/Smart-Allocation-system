@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Smart Course Allocation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+
+<body>
+    <div class="container" style="max-width: 400px; margin-top: 100px;">
+        <header>
+            <h1>Register</h1>
+            <p>Create your student or admin account</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="margin-bottom: 1rem;">
+                    <label for="username" style="display: block; margin-bottom: 0.5rem;">Username / Student ID</label>
+                    <input type="text" id="username" name="username" required
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="password" style="display: block; margin-bottom: 0.5rem;">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password"
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="role" style="display: block; margin-bottom: 0.5rem;">Role</label>
+                    <select id="role" name="role"
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        <option value="student">Student</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Create Account</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem;">
+                Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

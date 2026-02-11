@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocation Analytics - Smart Allocation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-Y9vB7S879v3S7/p6Tlk2f5QYyX6Nf8E/3f6N4f6N4f6N4f6N4f6N4f6N4f6N4f6N"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container" style="max-width: 1200px;">
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>Allocation Analytics</h1>
+                <p class="subtitle">Real-time occupancy and demand insights</p>
+            </div>
+            <div>
+                <a href="{{ url_for('download_file', type='excel') }}" class="btn">Export Excel</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Dashboard</a>
+            </div>
+        </header>
+
+        <div class="summary-grid">
+            <div class="stat-card">
+                <span class="stat-value">{{ analytics.total_students if analytics else 0 }}</span>
+                <span class="stat-label">Total Applicants</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ analytics.assigned_count if analytics else 0 }}</span>
+                <span class="stat-label">Assigned</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ "%.1f"|format(analytics.satisfaction_rate) if analytics else 0 }}%</span>
+                <span class="stat-label">Satisfaction Rate</span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; margin-top: 2rem;">
+            <!-- Chart Section -->
+            <div class="card">
+                <h3>Course Demand vs Occupancy</h3>
+                <canvas id="demandChart" style="margin-top: 1rem;"></canvas>
+            </div>
+
+            <!-- Course Distribution Section -->
+            <div class="card">
+                <h3>Faculty & Seat Distribution</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Faculty</th>
+                                <th>Occupancy</th>
+                                <th>Seats Left</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td>{{ course.name }}</td>
+                                <td>{{ course.faculty_name or 'TBA' }}</td>
+                                <td>
+                                    <div style="width: 100%; background: #eee; border-radius: 5px; height: 10px;">
+                                        {% set count = course.assigned_students|length %}
+                                        {% set pct = (count / course.capacity * 100) if course.capacity > 0 else 0 %}
+                                        <div
+                                            style="width: {{ pct }}%; background: var(--primary); height: 10px; border-radius: 5px;">
+                                        </div>
+                                    </div>
+                                    <small>{{ count }} / {{ course.capacity }}</small>
+                                </td>
+                                <td>{{ [0, course.capacity - count]|max }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- List Section -->
+            <div class="card" style="grid-column: span 2;">
+                <h3>Priority Allocation Log</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>GPA</th>
+                                <th>Status</th>
+                                <th>Allocated Course</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.student_id }}</td>
+                                <td>{{ student.gpa }}</td>
+                                <td
+                                    style="color: {{ 'var(--success)' if student.allocation_status == 'Allocated' else 'var(--error)' if student.allocation_status == 'Unassigned' else 'var(--text-muted)' }}">
+                                    {{ student.allocation_status }}
+                                </td>
+                                <td>
+                                    {% if student.allocation_status == 'Allocated' and student.allocated_course %}
+                                    {{ student.allocated_course.name }}
+                                    {% else %}
+                                    <span style="color: var(--text-muted);">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const demandCtx = document.getElementById('demandChart').getContext('2d');
+
+        // Robust data handling
+        const analytics = {{ analytics | tojson if analytics else '{}' }};
+        const demandDataRaw = analytics.course_demand || {};
+        const occupancyDataRaw = analytics.occupancy || {};
+
+        const labels = Object.keys(demandDataRaw);
+        if (labels.length === 0) {
+            // Handle empty state
+            labels.push('No Data');
+        }
+
+        const demandValues = labels.map(label => demandDataRaw[label] || 0);
+        const occupancyValues = labels.map(label => occupancyDataRaw[label] || 0);
+
+        new Chart(demandCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Student Demand (Count)',
+                        data: demandValues,
+                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                        borderColor: '#2563eb',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Occupancy (Percentage %)',
+                        data: occupancyValues,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        yAxisID: 'y1',
+                        type: 'line',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: { display: true, text: 'Student Count' }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Occupancy %' }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

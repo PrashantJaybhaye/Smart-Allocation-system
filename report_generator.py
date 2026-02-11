@@ -29,9 +29,9 @@ class ReportGenerator:
         c.setFont("Helvetica-Bold", 12)
         c.drawString(50, height - 80, "Allocation Summary:")
         c.setFont("Helvetica", 10)
-        c.drawString(70, height - 100, f"Total Students: {summary['total_students']}")
-        c.drawString(70, height - 115, f"Assigned: {summary['assigned_students']}")
-        c.drawString(70, height - 130, f"Unassigned: {summary['unassigned_students']}")
+        c.drawString(70, height - 100, f"Total Students: {summary.get('total_students', 'N/A')}")
+        c.drawString(70, height - 115, f"Assigned: {summary.get('assigned_students', 'N/A')}")
+        c.drawString(70, height - 130, f"Unassigned: {summary.get('unassigned_students', 'N/A')}")
         
         # Table Header
         c.setFont("Helvetica-Bold", 10)

@@ -1,56 +1,75 @@
 class AllocationEngine:
-    def __init__(self, student_df, course_capacities):
+    def __init__(self, students, courses):
         """
-        :param student_df: Pandas DataFrame with student details and preferences.
-        :param course_capacities: Dictionary { 'Course Name': capacity }
+        :param students: List of Student model objects
+        :param courses: List of Course model objects
         """
-        self.students = student_df.to_dict('records')
-        self.capacities = course_capacities.copy()
+        # Sort students by priority: GPA (descending) and then Submission Time (ascending)
+        self.students = sorted(students, key=lambda s: (-s.gpa, s.submission_time))
+        self.courses = {c.name: c for c in courses}
+        self.course_usage = {c.name: 0 for c in courses}
         self.allocations = []
-        self.course_usage = {course: 0 for course in course_capacities}
 
     def allocate(self):
         """
-        Performs the allocation based on preferences.
+        Performs priority-based allocation.
         """
-        if not self.students:
-            return []
-
-        # Dynamically find all "Preference X" columns and sort them correctly
-        pref_cols = [col for col in self.students[0].keys() if 'Preference' in col]
-        pref_cols.sort() # Sorting ensures Preference 1 < Preference 2 < Preference 3 etc.
-        
+        # Reset state to allow multiple calls without corruption
+        self.allocations = []
+        for c in self.courses.values():
+            self.course_usage[c.name] = 0
+            # Reset student records for a clean run if necessary
+            # (assuming the caller handles DB session or we update them here)
+            
         for student in self.students:
-            allocated_course = "Unassigned"
+            allocated_course_name = "Unassigned"
+            prefs = student.preferences or []
             
-            # Check preferences in order
-            for pref_col in pref_cols:
-                desired_course = student.get(pref_col)
-                
-                # Skip if empty or not in capacities
-                if not desired_course or desired_course not in self.capacities:
-                    continue
-                    
-                # If the course has space
-                if self.course_usage[desired_course] < self.capacities[desired_course]:
-                    allocated_course = desired_course
-                    self.course_usage[desired_course] += 1
-                    break
+            for course_name in prefs:
+                if course_name in self.courses:
+                    course = self.courses[course_name]
+                    if self.course_usage[course_name] < course.capacity:
+                        allocated_course_name = course_name
+                        self.course_usage[course_name] += 1
+                        student.allocated_course_id = course.id
+                        student.allocation_status = 'Allocated'
+                        break
             
-            # Prepare result entry
-            result = student.copy()
-            result['Allocated Course'] = allocated_course
-            self.allocations.append(result)
+            if allocated_course_name == "Unassigned":
+                student.allocation_status = 'Unassigned'
+            
+            self.allocations.append({
+                'Student ID': student.student_id,
+                'Name': student.name,
+                'GPA': student.gpa,
+                'Allocated Course': allocated_course_name,
+                'Status': student.allocation_status
+            })
             
         return self.allocations
 
-    def get_summary(self):
+    def get_analytics(self):
         """
-        Returns a summary of course usage.
+        Returns stats for the dashboard.
         """
+        total = len(self.students)
+        assigned = sum(1 for s in self.students if getattr(s, 'allocation_status', 'Unallocated') == 'Allocated')
+        
+        # Course Demand (count how many students put each course as 1st preference)
+        demand = {}
+        for s in self.students:
+            if s.preferences:
+                first_pref = s.preferences[0]
+                demand[first_pref] = demand.get(first_pref, 0) + 1
+
         return {
-            "course_usage": self.course_usage,
-            "total_students": len(self.students),
-            "assigned_students": sum(self.course_usage.values()),
-            "unassigned_students": len(self.students) - sum(self.course_usage.values())
+            "total_students": total,
+            "assigned_count": assigned,
+            "assigned_students": assigned,  # for compatibility
+            "unassigned_students": total - assigned,
+            "satisfaction_rate": (assigned / total * 100) if total > 0 else 0,
+            "course_demand": demand,
+            "occupancy": {name: (usage / self.courses[name].capacity * 100) 
+                          if self.courses[name].capacity > 0 else 0
+                          for name, usage in self.course_usage.items()}
         }
