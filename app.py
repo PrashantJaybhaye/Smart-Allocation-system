@@ -179,11 +179,15 @@ def dashboard():
         already_submitted = student_record and student_record.preferences
         can_submit = not already_submitted or allow_repref
         
+        # Number of preference slots = min(available courses, 5)
+        num_preferences = min(len(courses), 5)
+        
         return render_template('student_dashboard.html', 
                                student=student_record, 
                                courses=courses,
                                recommendations=recommendations,
-                               can_submit=can_submit)
+                               can_submit=can_submit,
+                               num_preferences=num_preferences)
 
 @app.route('/submit_preferences', methods=['POST'])
 @login_required

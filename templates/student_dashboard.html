@@ -4,111 +4,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - Smart Allocation</title>
+    <title>Student Portal - Smart Allocation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <style>
+        .portal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1.5rem;
+        }
+
+        .profile-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            color: #475569;
+            margin-right: 1rem;
+        }
+
+        .avatar-circle {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 1.5rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+        }
+
+        .step.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .step-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            margin-right: 0.5rem;
+        }
+
+        .step.active .step-num {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Preference Card Styles */
+        .pref-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .pref-item:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1);
+            background: white;
+        }
+
+        .pref-label {
+            position: absolute;
+            top: -0.6rem;
+            left: 1rem;
+            background: white;
+            padding: 0 0.5rem;
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .allocation-result {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #bbf7d0;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .allocation-result.unassigned {
+            background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%);
+            border-color: #fecaca;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container">
-        <header style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="container" style="max-width: 900px;">
+        <!-- Header -->
+        <header class="portal-header">
             <div>
-                <h1>Welcome, {{ current_user.username }}</h1>
-                <p class="subtitle">Student Preference Portal</p>
+                <h1 style="margin: 0; font-size: 1.5rem;">Student Portal</h1>
+                <p class="subtitle" style="margin-top: 0.25rem;">Smart Course Allocation</p>
             </div>
-            <form action="{{ url_for('logout') }}" method="POST" style="display: inline;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-secondary">Logout</button>
-            </form>
+            <div style="display: flex; align-items: center;">
+                <div class="profile-badge">
+                    <div class="avatar-circle">{{ current_user.username[0] }}</div>
+                    <span style="font-weight: 500;">{{ current_user.username }}</span>
+                </div>
+                <form action="{{ url_for('logout') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary btn-sm"
+                        style="border: none; background: transparent; color: #64748b; font-weight: 600;">Sign
+                        Out</button>
+                </form>
+            </div>
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
+        <div style="margin-bottom: 2rem;">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
         {% endif %}
         {% endwith %}
 
+        <!-- Allocation Status Banner -->
         {% if student and student.allocation_status != 'Pending' %}
-        <div class="card" style="border-left: 5px solid var(--primary); margin-bottom: 2rem;">
-            <h2>Allocation Result</h2>
-            <p>Status: <strong
-                    style="color: {{ 'var(--success)' if student.allocation_status == 'Allocated' else 'var(--error)' }}">{{
-                    student.allocation_status }}</strong></p>
+        <div class="allocation-result {{ 'unassigned' if student.allocation_status != 'Allocated' else '' }}">
+            <h2 class="{{ 'text-success' if student.allocation_status == 'Allocated' else 'text-error' }}"
+                style="margin-top: 0;">
+                {{ 'Congratulations!' if student.allocation_status == 'Allocated' else 'Allocation Status Update' }}
+            </h2>
+
             {% if student.allocation_status == 'Allocated' %}
-            <p>Course Assigned: <strong>{{ student.allocated_course.name }}</strong></p>
-            <p><small>Instructor: {{ student.allocated_course.faculty_name or 'TBA' }}</small></p>
+            <p style="font-size: 1.1rem; color: #15803d; margin-bottom: 0.5rem;">You have been successfully allocated
+                to:</p>
+            <div style="font-size: 1.75rem; font-weight: 800; color: #14532d; margin: 1rem 0;">
+                {{ student.allocated_course.name }}
+            </div>
+            <div
+                style="display: inline-block; background: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; margin-top: 1rem;">
+                <strong>Faculty:</strong> {{ student.allocated_course.faculty_name or 'To be announced' }}
+            </div>
+            {% else %}
+            <p style="font-size: 1.1rem; color: #b91c1c;">
+                You have not been assigned a course in this round.
+            </p>
+            <p style="color: #7f1d1d; font-size: 0.9rem;">
+                This may be due to high demand for your preferred choices or GPA cutoffs. Please contact the
+                administration for the next steps or wait for the second round.
+            </p>
             {% endif %}
         </div>
         {% endif %}
 
-        {% if recommendations %}
-        <div class="card" style="background: #f0f7ff; border: 1px solid #cce3ff;">
-            <h3 style="margin-top: 0; color: #0056b3;">✨ Recommended for You</h3>
-            <p style="font-size: 0.9rem;">Based on your academic profile and current demand, you might like:</p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                {% for rec in recommendations %}
-                <span
-                    style="background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; border: 1px solid #b3d7ff; color: #0056b3;">
-                    {{ rec }}
-                </span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+        <div class="grid-2" style="align-items: start;">
+            <!-- Main Preference Form -->
+            <div class="card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="margin: 0;">Course Preferences</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            {{ "Submissions are currently locked." if not can_submit else "Rank your choices from 1
+                            (Highest) to 5 (Lowest)." }}
+                        </p>
+                    </div>
+                </div>
 
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>Submit Your Preferences</h3>
-                {% if not can_submit %}
-                <span
-                    style="background: #f1f5f9; color: #64748b; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
-                    Locked 🔒 </span>
+                <form action="{{ url_for('submit_preferences') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    {% for i in range(1, num_preferences + 1) %}
+                    <div class="pref-item">
+                        <span class="pref-label">Priority #{{ i }}</span>
+                        <select name="preferences" class="form-control"
+                            style="border: none; background: transparent; padding: 0.25rem 0;" required {{ 'disabled' if
+                            not can_submit else '' }}>
+                            <option value="">Select a course...</option>
+                            {% for course in courses %}
+                            <option value="{{ course.name }}" {% if student and student.preferences and
+                                student.preferences|length>= i and student.preferences[i-1] == course.name %}selected{%
+                                endif %}>
+                                {{ course.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endfor %}
+
+                    <div
+                        style="margin-top: 2rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        {% if student and student.preferences and student.submission_time %}
+                        <div style="text-align: left;">
+                            <span
+                                style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Last
+                                Updated</span>
+                            <span style="font-size: 0.85rem; font-weight: 500; color: #475569;">{{
+                                student.submission_time.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                        </div>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+
+                        {% if can_submit %}
+                        <button type="submit" class="btn">
+                            Save Preferences
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-secondary" disabled>
+                            Selection Locked 🔒
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- Profile & Info Column -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                {% if student %}
+                <!-- Profile Card -->
+                <div class="card" style="padding: 1.5rem;">
+                    <h4
+                        style="margin-top: 0; font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                        Student Profile</h4>
+
+                    <div style="margin-bottom: 1rem;">
+                        <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Full Name</span>
+                        <span style="font-weight: 500; color: #1e293b;">{{ student.name }}</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">GPA</span>
+                            <span style="font-weight: 600; color: var(--primary);">{{ "%.2f"|format(student.gpa) if
+                                student.gpa else '-' }}</span>
+                        </div>
+                        <div>
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Class</span>
+                            <span style="font-weight: 500; color: #1e293b;">{{ student.student_class or '-' }}</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 0;">
+                        <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Department</span>
+                        <span style="font-weight: 500; color: #1e293b; font-size: 0.9rem;">{{ student.department or
+                            'General' }}</span>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                {% if recommendations %}
+                <div class="card"
+                    style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; padding: 1.5rem;">
+                    <h4 style="margin-top: 0; color: #1e40af; font-size: 0.95rem; margin-bottom: 0.5rem;">✨ Suggested
+                        for You</h4>
+                    <p style="font-size: 0.85rem; color: #1e3a8a; margin-bottom: 1rem; opacity: 0.8;">Based on your
+                        profile.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        {% for rec in recommendations %}
+                        <span
+                            style="background: rgba(255,255,255,0.6); color: #172554; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 500;">
+                            {{ rec }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <!-- New user empty state -->
+                <div class="card" style="padding: 2rem; text-align: center;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">👋</div>
+                    <h4 style="margin: 0 0 0.5rem;">Welcome!</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+                        Select your preferred courses on the left and submit to get started.
+                    </p>
+                </div>
                 {% endif %}
             </div>
-
-            {% if not can_submit %}
-            <p style="color: var(--text-muted);">Your preferences have been finalized. Contact an administrator for any
-                changes.</p>
-            {% else %}
-            <p>Select your preferred courses in order of priority (1st choice at the top).</p>
-            {% endif %}
-
-            <form action="{{ url_for('submit_preferences') }}" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                {% for i in range(1, 6) %}
-                <div style="margin-bottom: 1rem;">
-                    <label for="preference-{{ i }}">Priority {{ i }}</label>
-                    <select id="preference-{{ i }}" name="preferences" class="form-control" {{ 'disabled' if not
-                        can_submit else '' }}
-                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd; margin-top: 0.25rem; {{ 'background-color: #f8fafc;' if not can_submit else '' }}">
-                        <option value="">Select a course...</option>
-                        {% for course in courses %}
-                        <option value="{{ course.name }}" {% if student and student.preferences and
-                            student.preferences|length>= i and student.preferences[i-1] == course.name %}selected{%
-                            endif %}>
-                            {{ course.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% endfor %}
-
-                <div style="margin-top: 2rem;">
-                    {% if can_submit %}
-                    <button type="submit" class="btn">Confirm Preferences</button>
-                    {% endif %}
-
-                    {% if student and student.submission_time %}
-                    <span style="margin-left: 1rem; color: var(--text-muted); font-size: 0.8rem;">
-                        Last submitted: {{ student.submission_time.strftime('%Y-%m-%d %H:%M') if student.submission_time
-                        else 'N/A' }}
-                    </span>
-                    {% endif %}
-                </div>
-            </form>
         </div>
     </div>
+
+    <!-- Duplicate Prevention Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selects = document.querySelectorAll('select[name="preferences"]');
+
+            function updateOptions() {
+                const selectedValues = Array.from(selects)
+                    .map(s => s.value)
+                    .filter(v => v); // Get all non-empty selected values
+
+                selects.forEach(select => {
+                    const currentVal = select.value;
+                    Array.from(select.options).forEach(option => {
+                        if (option.value === "") return; // Skip placeholder
+
+                        // Disable if selected elsewhere, enable otherwise
+                        // But keep enabled if it's the currently selected value of THIS dropdown
+                        if (selectedValues.includes(option.value) && option.value !== currentVal) {
+                            option.disabled = true;
+                            // Optional: style disabled options
+                            option.style.color = '#cbd5e1';
+                        } else {
+                            option.disabled = false;
+                            option.style.color = '';
+                        }
+                    });
+                });
+            }
+
+            selects.forEach(select => {
+                select.addEventListener('change', updateOptions);
+            });
+
+            // Initial run to handle pre-filled values
+            updateOptions();
+        });
+    </script>
 </body>
 
 </html>

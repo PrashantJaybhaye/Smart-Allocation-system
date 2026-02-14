@@ -6,13 +6,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Student - Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container" style="max-width: 600px; margin-top: 4rem;">
-        <header class="text-center mb-4">
-            <h1>Edit Student</h1>
-            <p class="subtitle">Update student details</p>
+    <div class="container" style="max-width: 800px;">
+        <!-- Header -->
+        <header class="page-header">
+            <div>
+                <div class="breadcrumb">
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a
+                        href="{{ url_for('admin_students_list') }}">Students</a> / Edit
+                </div>
+                <h1>Edit Student Profile</h1>
+                <p class="subtitle">Update details for {{ student.name }}</p>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_students_list') }}" class="btn btn-secondary">Cancel</a>
+            </div>
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -27,71 +56,95 @@
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                <div class="form-group">
-                    <label for="username">Unique Student Data ID (Login Username)</label>
-                    <input type="text" id="username" name="username" value="{{ student.student_id }}" readonly
-                        class="form-control" style="background-color: #f3f4f6; cursor: not-allowed;">
-                    <small style="color: var(--text-muted);">Username cannot be changed.</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="full_name">Student Name</label>
-                    <input type="text" id="full_name" name="full_name" value="{{ student.name }}" required
-                        class="form-control" pattern="^[\p{L}\s\.\-\']+$"
-                        title="Name should contain letters, spaces, hyphens, periods, or apostrophes">
-                </div>
-
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" value="{{ student.email }}" required
-                        class="form-control">
-                </div>
-
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label for="student_class">Class</label>
-                        <input type="text" id="student_class" name="student_class" value="{{ student.student_class }}"
-                            required class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="roll_no">Roll No.</label>
-                        <input type="text" id="roll_no" name="roll_no" value="{{ student.roll_no }}" required
-                            class="form-control" pattern="^[a-zA-Z0-9]+$" title="Alphanumeric roll number">
+                <!-- Section: Account Info -->
+                <div class="mb-6">
+                    <h3 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem;">Account
+                        Information</h3>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Student ID (Username)</label>
+                            <input type="text" value="{{ student.student_id }}" readonly class="form-control"
+                                style="background-color: #f8fafc; color: #64748b;">
+                            <div class="form-hint">Unique identifier used for login. Cannot be changed.</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" id="email" name="email" value="{{ student.email }}" required
+                                class="form-control" placeholder="student@college.edu">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="mobile">Mobile No.</label>
-                    <input type="tel" id="mobile" name="mobile" value="{{ student.mobile_no }}" required
-                        class="form-control" pattern="^\d{10}$" title="Please enter a valid 10-digit mobile number">
+                <!-- Section: Personal Details -->
+                <div class="mb-6">
+                    <h3 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem;">Personal
+                        Details</h3>
+                    <div class="form-group">
+                        <label for="full_name" class="form-label">Full Name</label>
+                        <input type="text" id="full_name" name="full_name" value="{{ student.name }}" required
+                            class="form-control" placeholder="e.g. John Doe">
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="mobile" class="form-label">Mobile Number</label>
+                            <input type="tel" id="mobile" name="mobile" value="{{ student.mobile_no }}" required
+                                class="form-control" pattern="^\d{10}$" title="10-digit mobile number"
+                                placeholder="9876543210">
+                        </div>
+                        <div class="form-group">
+                            <label for="department" class="form-label">Department</label>
+                            <select id="department" name="department" required class="form-control">
+                                <option value="" disabled>Select Department</option>
+                                {% set departments = [
+                                "Agricultural Engineering", "Computer Science Engineering", "Civil Engineering",
+                                "Computer Science Design", "Electronics and Computer Engineering", "AIDS",
+                                "Mechanical Engineering", "Electrical Engineering", "Mechatronics Engineering",
+                                "Plastics and Polymer engineering", "Electronics and Telecommunication Engineering"
+                                ] %}
+                                {% for dept in departments %}
+                                <option value="{{ dept }}" {% if student.department==dept %}selected{% endif %}>{{ dept
+                                    }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="student_class" class="form-label">Class</label>
+                            <input type="text" id="student_class" name="student_class"
+                                value="{{ student.student_class }}" required class="form-control"
+                                placeholder="e.g. TY-B">
+                        </div>
+                        <div class="form-group">
+                            <label for="roll_no" class="form-label">Roll Number</label>
+                            <input type="text" id="roll_no" name="roll_no" value="{{ student.roll_no }}" required
+                                class="form-control" placeholder="e.g. 45">
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="department">Engineering Department</label>
-                    <select id="department" name="department" required class="form-control">
-                        <option value="" disabled>Select Department</option>
-                        {% set departments = [
-                        "Agricultural Engineering", "Computer Science Engineering", "Civil Engineering",
-                        "Computer Science Design", "Electronics and Computer Engineering", "AIDS",
-                        "Mechanical Engineering", "Electrical Engineering", "Mechatronics Engineering",
-                        "Plastics and Polymer engineering", "Electronics and Telecommunication Engineering"
-                        ] %}
-                        {% for dept in departments %}
-                        <option value="{{ dept }}" {% if student.department==dept %}selected{% endif %}>{{ dept }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="grid-2" style="margin-top: 1rem;">
-                    <a href="{{ url_for('admin_students_list') }}" class="btn btn-secondary"
-                        style="text-align: center;">Cancel</a>
-                    <button type="submit" class="btn">Update Student</button>
+                <div
+                    style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                    <button type="submit" class="btn" style="flex: 1;">Save Changes</button>
+                    <!-- Delete Button (Separate Form) needs to be handled carefully or just link back -->
+                    <!-- Usually edit page is just for saving. Delete is on list page. -->
                 </div>
             </form>
         </div>
+
+        <div class="text-center" style="margin-top: 2rem; margin-bottom: 2rem;">
+            <form action="{{ url_for('delete_student', id=student.id) }}" method="POST"
+                onsubmit="return confirm('CRITICAL WARNING: This will permanently delete the student account and all usage data. This action cannot be undone. Are you sure?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger"
+                    style="background-color: transparent; color: #ef4444; border: 1px solid #ef4444;">
+                    Delete Student Account
+                </button>
+            </form>
+        </div>
     </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
 </html>

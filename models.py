@@ -35,7 +35,7 @@ class Student(db.Model):
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150))
     gpa = db.Column(db.Float, default=0.0) # For priority allocation
-    submission_time = db.Column(db.DateTime, default=datetime.utcnow)
+    submission_time = db.Column(db.DateTime, nullable=True)
     
     # Store preferences as a JSON or a related table
     preferences = db.Column(db.JSON) # List of course names in order
@@ -53,6 +53,10 @@ class Student(db.Model):
 
     def get_recommendations(self):
         """Simple rule-based recommendation logic."""
+        # Only show recommendations after student has submitted preferences
+        if not self.preferences:
+            return []
+
         all_courses = Course.query.all()
         recs = []
         
