@@ -45,6 +45,12 @@ class Student(db.Model):
     
     allocated_course = db.relationship('Course', backref='assigned_students')
 
+    # Additional details for admin view
+    student_class = db.Column(db.String(50))
+    roll_no = db.Column(db.String(50))
+    mobile_no = db.Column(db.String(20))
+    department = db.Column(db.String(100))
+
     def get_recommendations(self):
         """Simple rule-based recommendation logic."""
         all_courses = Course.query.all()

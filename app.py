@@ -12,6 +12,7 @@ from datetime import datetime
 from flask_wtf.csrf import CSRFProtect
 import logging
 from dotenv import load_dotenv
+import re
 
 # Automatically load .env file if it exists, but don't fail if it doesn't
 load_dotenv()
@@ -64,6 +65,31 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         
+        # New Fields
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        student_class = request.form.get('student_class')
+        roll_no = request.form.get('roll_no')
+        mobile = request.form.get('mobile')
+        department = request.form.get('department')
+        
+        # Validation
+        if not all([username, password, full_name, email, student_class, roll_no, mobile, department]):
+            flash('All fields are required.', 'error')
+            return render_template('register.html')
+
+        if not re.match(r'^[a-zA-Z0-9]+$', username):
+            flash('Username must be alphanumeric (no spaces/special chars).', 'error')
+            return render_template('register.html')
+            
+        if not re.match(r'^\d{10}$', mobile):
+            flash('Mobile number must be exactly 10 digits.', 'error')
+            return render_template('register.html')
+
+        if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+           flash('Invalid email address format.', 'error')
+           return render_template('register.html')
+        
         # Security: Prevent privilege escalation by ignoring 'role' from form
         role = 'student' # Default role
         
@@ -71,9 +97,36 @@ def register():
         if user_exists:
             flash('Username already exists', 'error')
         else:
+            # 1. Create User Login
             new_user = User(username=username, role=role)
             new_user.password = password
             db.session.add(new_user)
+            
+            # 2. Create Student Profile
+            # Check if student record exists (e.g. from bulk upload)
+            student = Student.query.filter_by(student_id=username).first()
+            
+            if student:
+                # Update existing record with registration details
+                student.name = full_name
+                student.email = email
+                student.student_class = student_class
+                student.roll_no = roll_no
+                student.mobile_no = mobile
+                student.department = department
+            else:
+                # Create new student record
+                new_student = Student(
+                    student_id=username,
+                    name=full_name,
+                    email=email,
+                    student_class=student_class,
+                    roll_no=roll_no,
+                    mobile_no=mobile,
+                    department=department
+                )
+                db.session.add(new_student)
+            
             db.session.commit()
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
@@ -157,6 +210,15 @@ def submit_preferences():
     db.session.commit()
     flash('Preferences submitted successfully!', 'success')
     return redirect(url_for('dashboard'))
+
+@app.route('/admin/students')
+@login_required
+def admin_students_list():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    students = Student.query.all()
+    return render_template('admin_students.html', students=students)
 
 @app.route('/admin/upload_students', methods=['POST'])
 @login_required

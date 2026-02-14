@@ -6,6 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Smart Allocation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <style>
+        .system-pref-card {
+            border-left: 5px solid var(--error);
+        }
+
+        .system-pref-card.enabled {
+            border-left-color: var(--success);
+        }
+
+        .btn-toggle-repref {
+            width: 100%;
+            background-color: var(--primary);
+        }
+
+        .btn-toggle-repref.enabled {
+            background-color: #64748b;
+        }
+    </style>
 </head>
 
 <body>
@@ -16,6 +34,8 @@
                 <p class="subtitle">System Resource Management</p>
             </div>
             <div>
+                <a href="{{ url_for('admin_students_list') }}" class="btn"
+                    style="margin-right: 0.5rem; background: #64748b;">View Students</a>
                 <a href="{{ url_for('admin_results') }}" class="btn">View Results</a>
                 <form action="{{ url_for('logout') }}" method="POST" style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -115,15 +135,13 @@
 
         <!-- System Management & Reset Section -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
-            <div class="card"
-                style="border-left: 5px solid {{ 'var(--success)' if allow_repref else 'var(--error)' }};">
+            <div class="card system-pref-card {{ 'enabled' if allow_repref else '' }}">
                 <h3>System Preferences</h3>
                 <p style="font-size: 0.9rem;">Current Mode: <strong>{{ 'Flexible (Multiple Submissions)' if allow_repref
                         else 'Strict (One-time Only)' }}</strong></p>
                 <form action="{{ url_for('toggle_repref') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn"
-                        style="width: 100%; {{ 'background: #64748b;' if allow_repref else '' }}">
+                    <button type="submit" class="btn btn-toggle-repref {{ 'enabled' if allow_repref else '' }}">
                         {{ 'Disable Repreference' if allow_repref else 'Enable Repreference' }}
                     </button>
                 </form>
