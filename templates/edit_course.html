@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Course - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+
+<body>
+    <div class="container" style="max-width: 500px; margin-top: 4rem;">
+        <header class="text-center mb-4">
+            <h1>Edit Course</h1>
+            <p class="subtitle">Update course details</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="name">Course Name</label>
+                    <input type="text" id="name" name="name" value="{{ course.name }}" required class="form-control"
+                        placeholder="Course Name">
+                </div>
+
+                <div class="form-group">
+                    <label for="capacity">Seat Capacity</label>
+                    <input type="number" id="capacity" name="capacity" value="{{ course.capacity }}" min="1" required
+                        class="form-control" placeholder="Seat Capacity">
+                </div>
+
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary"
+                        style="text-align: center;">Cancel</a>
+                    <button type="submit" class="btn">Update Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

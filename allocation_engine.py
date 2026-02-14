@@ -1,3 +1,5 @@
+from datetime import datetime
+
 class AllocationEngine:
     def __init__(self, students, courses):
         """
@@ -5,9 +7,18 @@ class AllocationEngine:
         :param courses: List of Course model objects
         """
         # Sort students by priority: GPA (descending) and then Submission Time (ascending)
-        self.students = sorted(students, key=lambda s: (-s.gpa, s.submission_time))
+        # Handle potential None values for robustness
+        self.students = sorted(students, key=lambda s: (-(s.gpa or 0.0), s.submission_time or datetime.max))
         self.courses = {c.name: c for c in courses}
         self.course_usage = {c.name: 0 for c in courses}
+        
+        # Pre-populate usage based on existing DB allocations (for View Results mode)
+        for s in students:
+            # Check if student is allocated and the course exists in our current list
+            if s.allocation_status == 'Allocated' and s.allocated_course:
+                c_name = s.allocated_course.name
+                if c_name in self.course_usage:
+                    self.course_usage[c_name] += 1
         self.allocations = []
 
     def allocate(self):
@@ -56,20 +67,38 @@ class AllocationEngine:
         assigned = sum(1 for s in self.students if getattr(s, 'allocation_status', 'Unallocated') == 'Allocated')
         
         # Course Demand (count how many students put each course as 1st preference)
-        demand = {}
+        course_demand = {name: 0 for name in self.courses}
         for s in self.students:
             if s.preferences:
                 first_pref = s.preferences[0]
-                demand[first_pref] = demand.get(first_pref, 0) + 1
+                if first_pref in course_demand:
+                    course_demand[first_pref] += 1
+
+
+        # Faculty Distribution (Total Seats per Faculty)
+        faculty_dist = {}
+        for c in self.courses.values():
+            faculty = c.faculty_name or "General / Unassigned"
+            if faculty not in faculty_dist:
+                faculty_dist[faculty] = {'total_seats': 0, 'allocated_seats': 0}
+            faculty_dist[faculty]['total_seats'] += c.capacity
+            faculty_dist[faculty]['allocated_seats'] += self.course_usage.get(c.name, 0)
 
         return {
             "total_students": total,
             "assigned_count": assigned,
-            "assigned_students": assigned,  # for compatibility
+            # 'assigned_students' is kept for backward compatibility with older templates/logic
+            "assigned_students": assigned,
             "unassigned_students": total - assigned,
             "satisfaction_rate": (assigned / total * 100) if total > 0 else 0,
-            "course_demand": demand,
-            "occupancy": {name: (usage / self.courses[name].capacity * 100) 
-                          if self.courses[name].capacity > 0 else 0
-                          for name, usage in self.course_usage.items()}
+            "course_demand": course_demand,
+            "faculty_distribution": faculty_dist,
+            "occupancy": {
+                name: {
+                    'percentage': (usage / self.courses[name].capacity * 100) if self.courses[name].capacity > 0 else 0,
+                    'filled': usage,
+                    'capacity': self.courses[name].capacity
+                }
+                for name, usage in self.course_usage.items()
+            }
         }

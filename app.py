@@ -220,6 +220,126 @@ def admin_students_list():
     students = Student.query.all()
     return render_template('admin_students.html', students=students)
 
+@app.route('/admin/student/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_student(id):
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    student = Student.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        student_class = request.form.get('student_class')
+        roll_no = request.form.get('roll_no')
+        mobile = request.form.get('mobile')
+        department = request.form.get('department')
+        
+        # Validation (mirrors register)
+        if not all([full_name, email, student_class, roll_no, mobile, department]):
+            flash('All fields are required.', 'error')
+            return render_template('edit_student.html', student=student)
+
+        if not re.match(r'^\d{10}$', mobile):
+            flash('Mobile number must be exactly 10 digits.', 'error')
+            return render_template('edit_student.html', student=student)
+
+        if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+           flash('Invalid email address format.', 'error')
+           return render_template('edit_student.html', student=student)
+
+        student.name = full_name
+        student.email = email
+        student.student_class = student_class
+        student.roll_no = roll_no
+        student.mobile_no = mobile
+        student.department = department
+        
+        try:
+            db.session.commit()
+            flash('Student updated successfully!', 'success')
+            return redirect(url_for('admin_students_list'))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.exception("Error updating student")
+            flash('Error updating student, please try again.', 'error')
+            
+    return render_template('edit_student.html', student=student)
+
+@app.route('/admin/student/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_student(id):
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    student = Student.query.get_or_404(id)
+    try:
+        # Check if student has a linked User account and delete it too
+        user = User.query.filter_by(username=student.student_id).first()
+        if user:
+            db.session.delete(user)
+            
+        db.session.delete(student)
+        db.session.commit()
+        flash('Student deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.exception("Error deleting student")
+        flash('An error occurred while deleting the student.', 'error')
+        
+    return redirect(url_for('admin_students_list'))
+
+@app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_course(id):
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    course = Course.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        course.name = request.form.get('name')
+        
+        cap_raw = request.form.get('capacity')
+        if cap_raw:
+            try:
+                cap = int(cap_raw)
+                if cap < 1: 
+                    raise ValueError("Capacity must be >= 1")
+                course.capacity = cap
+            except ValueError:
+                flash('Invalid capacity value', 'error')
+                return render_template('edit_course.html', course=course)
+            
+        try:
+            db.session.commit()
+            flash('Course updated successfully!', 'success')
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.exception("Error updating course")
+            flash('An error occurred updating the course. Please try again or contact support.', 'error')
+            
+    return render_template('edit_course.html', course=course)
+
+@app.route('/admin/course/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_course(id):
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    course = Course.query.get_or_404(id)
+    try:
+        db.session.delete(course)
+        db.session.commit()
+        flash('Course deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting course: {str(e)}', 'error')
+        
+    return redirect(url_for('dashboard'))
+
 @app.route('/admin/upload_students', methods=['POST'])
 @login_required
 def upload_students():
@@ -279,8 +399,10 @@ def setup_courses():
         return redirect(url_for('dashboard'))
     
     course = Course.query.filter_by(name=name).first()
+    # faculty_name is no longer used/collected
+    
     if not course:
-        course = Course(name=name, capacity=cap)
+        course = Course(name=name, capacity=cap) # Faculty removed
         db.session.add(course)
     else:
         course.capacity = cap
@@ -326,7 +448,7 @@ def admin_results():
     engine = AllocationEngine(students, courses)
     analytics = engine.get_analytics()
     
-    return render_template('admin_results.html', students=students, analytics=analytics)
+    return render_template('admin_results.html', students=students, analytics=analytics, courses=courses)
 
 @app.route('/download/<type>')
 @login_required
@@ -415,4 +537,21 @@ def init_db_command():
     print("Database initialized successfully.")
 
 if __name__ == "__main__":
-    app.run()
+    # Check if we are in development mode (default to true for local run)
+    if os.environ.get('FLASK_ENV', 'development') == 'development':
+        try:
+            from livereload import Server
+            server = Server(app.wsgi_app)
+            # Watch templates and static files for changes
+            server.watch('templates/*.html')
+            server.watch('static/*.css')
+            server.watch('static/*.js')
+            print("🚀 Starting development server with LiveReload on http://127.0.0.1:5000")
+            server.serve(port=5000, debug=True)
+        except ImportError:
+            print("⚠️ LiveReload not installed. Falling back to standard Flask runner.")
+            print("💡 Tip: Run 'pip install livereload' for auto-browser refreshing.")
+            app.run(debug=True)
+    else:
+        # Production mode
+        app.run(debug=False, host='0.0.0.0')

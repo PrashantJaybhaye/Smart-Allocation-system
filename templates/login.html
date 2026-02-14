@@ -9,10 +9,10 @@
 </head>
 
 <body>
-    <div class="container" style="max-width: 400px; margin-top: 100px;">
-        <header>
+    <div class="container" style="max-width: 400px; margin-top: 6rem;">
+        <header class="text-center mb-4">
             <h1>Login</h1>
-            <p>Access your allocation dashboard</p>
+            <p class="subtitle">Access your allocation dashboard</p>
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -26,23 +26,28 @@
         <div class="card">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div style="margin-bottom: 1rem;">
-                    <label for="username" style="display: block; margin-bottom: 0.5rem;">Username / Student ID</label>
-                    <input type="text" id="username" name="username" required
-                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+
+                <div class="form-group">
+                    <label for="username">Username / Student ID</label>
+                    <input type="text" id="username" name="username" required class="form-control"
+                        placeholder="Enter your ID">
                 </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="password" style="display: block; margin-bottom: 0.5rem;">Password</label>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="current-password"
-                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        class="form-control" placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+
+                <button type="submit" class="btn btn-block">Sign In</button>
             </form>
-            <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem;">
-                Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+            <p class="text-center mt-4" style="font-size: 0.9rem;">
+                Don't have an account? <a href="{{ url_for('register') }}"
+                    style="color: var(--primary); font-weight: 600; text-decoration: none;">Register here</a>
             </p>
         </div>
     </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
 </html>
