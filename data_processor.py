@@ -34,6 +34,7 @@ class DataProcessor:
             'Open Elective Choices [Priority No. 5]': 'Preference 5',
             'Open Elective Choices [Priority No. 6]': 'Preference 6',
             'Open Elective Choices [Priority No. 7]': 'Preference 7',
+            'Open Elective Choices [Priority No. 8]': 'Preference 8',
         }
         
         # If Open Electives not found, try Audit Courses
@@ -46,6 +47,7 @@ class DataProcessor:
                 'Mandatory Non Credit Course Choices [Priority No. 5]': 'Preference 5',
                 'Mandatory Non Credit Course Choices [Priority No. 6]': 'Preference 6',
                 'Mandatory Non Credit Course Choices [Priority No. 7]': 'Preference 7',
+                'Mandatory Non Credit Course Choices [Priority No. 8]': 'Preference 8',
             })
         
         # We also need a reverse map to show original names in the UI later? 

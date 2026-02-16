@@ -70,17 +70,18 @@
                 <!-- Section 1: Account Setup -->
                 <div style="margin-bottom: 2rem;">
                     <div class="form-group">
-                        <label for="username" class="form-label">Student ID (Username)</label>
-                        <input type="text" id="username" name="username" required pattern="^[a-zA-Z0-9]+$"
-                            title="Alphanumeric characters only (no spaces)" class="form-control"
-                            placeholder="e.g. PRN123456" autofocus>
-                        <div class="form-hint">This will be your unique login ID.</div>
+                        <label for="username" class="form-label">UserID</label>
+                        <input type="text" id="username" name="username" required pattern="^[0-9]{12}$"
+                            inputmode="numeric" title="Exactly 12 digits required" minlength="12" maxlength="12"
+                            class="form-control" placeholder="e.g. 123456789012" autofocus
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)">
+                        <div class="form-hint">Enter your 12-digit UserID.</div>
                     </div>
 
                     <div class="form-group">
                         <label for="email" class="form-label">Email Address</label>
                         <input type="email" id="email" name="email" required class="form-control"
-                            placeholder="student@college.edu">
+                            placeholder="student@gmail.com">
                     </div>
                 </div>
 
@@ -91,8 +92,7 @@
                     <div class="form-group">
                         <label for="full_name" class="form-label">Full Name</label>
                         <input type="text" id="full_name" name="full_name" required pattern="[a-zA-Z\s]+"
-                            title="Name should only contain letters and spaces" class="form-control"
-                            placeholder="e.g. John Doe">
+                            title="Name should only contain letters and spaces" class="form-control">
                     </div>
 
                     <div class="grid-2">
@@ -107,7 +107,8 @@
                                 <option value="Computer Science Design">Computer Science Design</option>
                                 <option value="Electronics and Computer Engineering">Electronics and Computer
                                     Engineering</option>
-                                <option value="AIDS">AIDS</option>
+                                <option value="Artificial Intelligence and Data Science">Artificial Intelligence and
+                                    Data Science</option>
                                 <option value="Mechanical Engineering">Mechanical Engineering</option>
                                 <option value="Electrical Engineering">Electrical Engineering</option>
                                 <option value="Mechatronics Engineering">Mechatronics Engineering</option>
@@ -121,7 +122,7 @@
                         <div class="form-group">
                             <label for="mobile" class="form-label">Mobile</label>
                             <input type="tel" id="mobile" name="mobile" required pattern="^\d{10}$"
-                                title="10-digit mobile number" class="form-control" placeholder="9876543210">
+                                title="10-digit mobile number" class="form-control" placeholder="XXXXXXXXXX">
                         </div>
                     </div>
 
@@ -129,12 +130,12 @@
                         <div class="form-group">
                             <label for="student_class" class="form-label">Appearing Class</label>
                             <input type="text" id="student_class" name="student_class" required class="form-control"
-                                placeholder="e.g. TY-B">
+                                placeholder="e.g. FY, SY, TY">
                         </div>
                         <div class="form-group">
                             <label for="roll_no" class="form-label">Roll Number</label>
                             <input type="text" id="roll_no" name="roll_no" required pattern="^[a-zA-Z0-9]+$"
-                                class="form-control" placeholder="e.g. 45">
+                                class="form-control" placeholder="e.g. XX">
                         </div>
                     </div>
                 </div>

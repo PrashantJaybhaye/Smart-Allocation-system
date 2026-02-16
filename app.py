@@ -78,8 +78,8 @@ def register():
             flash('All fields are required.', 'error')
             return render_template('register.html')
 
-        if not re.match(r'^[a-zA-Z0-9]+$', username):
-            flash('Username must be alphanumeric (no spaces/special chars).', 'error')
+        if not re.match(r'^\d{12}$', username):
+            flash('UserID must be exactly 12 digits.', 'error')
             return render_template('register.html')
             
         if not re.match(r'^\d{10}$', mobile):
@@ -95,7 +95,7 @@ def register():
         
         user_exists = User.query.filter_by(username=username).first()
         if user_exists:
-            flash('Username already exists', 'error')
+            flash('UserID already exists', 'error')
         else:
             # 1. Create User Login
             new_user = User(username=username, role=role)
@@ -179,8 +179,8 @@ def dashboard():
         already_submitted = student_record and student_record.preferences
         can_submit = not already_submitted or allow_repref
         
-        # Number of preference slots = min(available courses, 5)
-        num_preferences = min(len(courses), 5)
+        # Number of preference slots = min(available courses, 8)
+        num_preferences = min(len(courses), 8)
         
         return render_template('student_dashboard.html', 
                                student=student_record, 
@@ -203,6 +203,16 @@ def submit_preferences():
         return redirect(url_for('dashboard'))
 
     prefs = request.form.getlist('preferences')
+    
+    # Validate: all preference slots must be filled (not empty)
+    courses = Course.query.all()
+    expected_count = min(len(courses), 8)
+    # Remove any empty values
+    prefs = [p for p in prefs if p.strip()]
+    if len(prefs) < expected_count:
+        flash(f'All {expected_count} preference fields are required. Please fill every slot.', 'error')
+        return redirect(url_for('dashboard'))
+    
     # Update or Create Student Record
     student = Student.query.filter_by(student_id=current_user.username).first()
     if not student:
@@ -367,7 +377,7 @@ def upload_students():
                 
                 student.name = row['Name']
                 # Collect all preference columns
-                prefs = [row[f'Preference {i}'] for i in range(1, 8) if f'Preference {i}' in row and pd.notna(row[f'Preference {i}'])]
+                prefs = [row[f'Preference {i}'] for i in range(1, 9) if f'Preference {i}' in row and pd.notna(row[f'Preference {i}'])]
                 student.preferences = prefs
                 
                 # Assume GPA is in the file if present
