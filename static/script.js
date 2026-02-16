@@ -2,14 +2,46 @@ document.addEventListener('DOMContentLoaded', function () {
     const forms = document.querySelectorAll('form');
 
     forms.forEach(form => {
-        form.addEventListener('submit', function (event) {
-            // Check if form is valid (if using browser validation)
-            if (!form.checkValidity()) {
-                // If form is invalid, browser shows error, don't show loading
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        // Function to check validity and toggle button
+        const checkFormValidity = () => {
+            if (!submitBtn) return;
+
+            // Only apply Strict validation disabling for "Create Account"
+            const btnText = submitBtn.innerText.trim().toLowerCase();
+            if (!btnText.includes("create account") && !btnText.includes("register")) {
                 return;
             }
 
-            const submitBtn = form.querySelector('button[type="submit"]');
+            if (form.checkValidity()) {
+                submitBtn.removeAttribute('disabled');
+                submitBtn.classList.remove('btn-disabled'); // Optional styling class
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            } else {
+                submitBtn.setAttribute('disabled', 'true');
+                submitBtn.classList.add('btn-disabled');
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+        };
+
+        // Initial check
+        checkFormValidity();
+
+        // Listen for input changes
+        form.addEventListener('input', checkFormValidity);
+        form.addEventListener('change', checkFormValidity);
+
+        form.addEventListener('submit', function (event) {
+            // content of the submit listener remains the same...
+            // Check if form is valid (if using browser validation)
+            if (!form.checkValidity()) {
+                // If form is invalid, browser shows error, don't show loading
+                event.preventDefault(); // Ensure it doesn't submit
+                return;
+            }
 
             if (submitBtn) {
                 // Prevent double submission

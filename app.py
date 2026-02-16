@@ -62,33 +62,67 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        # New Fields
-        full_name = request.form.get('full_name')
-        email = request.form.get('email')
-        student_class = request.form.get('student_class')
-        roll_no = request.form.get('roll_no')
-        mobile = request.form.get('mobile')
-        department = request.form.get('department')
+        # Sanitization
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        student_class = request.form.get('student_class', '').strip()
+        roll_no = request.form.get('roll_no', '').strip()
+        mobile = request.form.get('mobile', '').strip()
+        department = request.form.get('department', '').strip()
         
         # Validation
         if not all([username, password, full_name, email, student_class, roll_no, mobile, department]):
             flash('All fields are required.', 'error')
             return render_template('register.html')
 
+        # 1. UserID Validation
         if not re.match(r'^\d{12}$', username):
             flash('UserID must be exactly 12 digits.', 'error')
             return render_template('register.html')
             
+        if not (1 <= len(roll_no) <= 10):
+            flash('Roll number must be between 1 and 10 characters.', 'error')
+            return render_template('register.html')
+
+        # 2. Password Strength
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.', 'error')
+            return render_template('register.html')
+            
+        # 3. Mobile Validation
         if not re.match(r'^\d{10}$', mobile):
             flash('Mobile number must be exactly 10 digits.', 'error')
             return render_template('register.html')
 
-        if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+        # 4. Email Validation (Stricter)
+        if not re.match(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email):
            flash('Invalid email address format.', 'error')
            return render_template('register.html')
+
+        # 5. Full Name Validation
+        if not re.match(r'^[a-zA-Z\s]+$', full_name) or len(full_name) < 3 or len(full_name) > 30:
+            flash('Full name must contain only letters and spaces (3-30 chars).', 'error')
+            return render_template('register.html')
+
+        # 6. Allowed Values
+        allowed_classes = ['FY', 'SY', 'TY', 'Final Year']
+        if student_class not in allowed_classes:
+            flash('Invalid class selection.', 'error')
+            return render_template('register.html')
+            
+        allowed_departments = [
+            "Agricultural Engineering", "Computer Science Engineering", "Civil Engineering",
+            "Computer Science Design", "Electronics and Computer Engineering", 
+            "Artificial Intelligence and Data Science", "Mechanical Engineering", 
+            "Electrical Engineering", "Mechatronics Engineering", 
+            "Plastics and Polymer Engineering", "Electronics and Telecommunication Engineering", 
+            "Information Technology"
+        ]
+        if department not in allowed_departments:
+            flash('Invalid department selection.', 'error')
+            return render_template('register.html')
         
         # Security: Prevent privilege escalation by ignoring 'role' from form
         role = 'student' # Default role
