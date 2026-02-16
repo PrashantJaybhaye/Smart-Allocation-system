@@ -18,32 +18,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Add loading class
+                // Add loading class and spinner
                 submitBtn.classList.add('loading');
 
-                // Optional: Change text if it's not an icon button
-                const originalText = submitBtn.innerText;
-                submitBtn.dataset.originalText = originalText;
+                // Save original content
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.dataset.originalContent = originalContent;
 
-                // Cleanup on page unload or if submission is canceled/failed (basic timeout fallback)
-                // Note: For full AJAX forms, you'd clear this in the success/error callbacks.
-                // For standard form posts, the page usually reloads so this is less critical, 
-                // but we add a failsafe for history navigation (bfcache).
+                // Determine loading text based on current text
+                const btnText = submitBtn.innerText.trim().toLowerCase();
+                let loadingText = "Processing...";
+
+                if (btnText.includes("sign in") || btnText.includes("login")) {
+                    loadingText = "Signing In...";
+                } else if (btnText.includes("create account") || btnText.includes("register")) {
+                    loadingText = "Creating Account...";
+                } else if (btnText.includes("save")) {
+                    loadingText = "Saving...";
+                } else if (btnText.includes("update")) {
+                    loadingText = "Updating...";
+                } else if (btnText.includes("upload")) {
+                    loadingText = "Uploading...";
+                }
+
+                // Inject text only
+                submitBtn.innerText = loadingText;
             }
         });
     });
 
     // Restore button state when navigating back (bfcache)
     window.addEventListener('pageshow', function (event) {
-        if (event.persisted) {
-            const loadingBtns = document.querySelectorAll('.btn.loading');
-            loadingBtns.forEach(btn => {
-                btn.classList.remove('loading');
-                if (btn.dataset.originalText) {
-                    btn.innerText = btn.dataset.originalText;
-                }
-            });
-        }
+        // Always check for loading buttons regardless of persistence
+        const loadingBtns = document.querySelectorAll('.btn.loading');
+        loadingBtns.forEach(btn => {
+            btn.classList.remove('loading');
+            if (btn.dataset.originalContent) {
+                btn.innerHTML = btn.dataset.originalContent;
+            }
+        });
     });
 
     // File input enhancement

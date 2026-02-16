@@ -309,3 +309,11 @@ tr:last-child td {
 .file-input {
   display: none;
 }
+
+/* Loading State */
+/* Loading State */
+.loading {
+  opacity: 0.75;
+  cursor: not-allowed;
+  pointer-events: none;
+}

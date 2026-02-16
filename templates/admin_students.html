@@ -4,9 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registry - Admin Console</title>
+    <title>Student Registry | Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* Enhanced Aesthetics */
+        :root {
+            --surface: #ffffff;
+            --border-subtle: #e2e8f0;
+            --text-secondary: #64748b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            background-color: #f1f5f9;
+            /* Slightly darker bg for contrast */
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Header */
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -14,138 +38,242 @@
             margin-bottom: 2rem;
         }
 
-        .breadcrumb {
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
             font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
+            margin-top: 0.25rem;
         }
 
-        .breadcrumb a {
-            color: var(--primary);
-            text-decoration: none;
+        /* Content Surface */
+        .content-card {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
         }
 
-        .search-bar {
+        /* Toolbar */
+        .toolbar {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .search-group {
+            position: relative;
             width: 100%;
-            max-width: 300px;
-            padding: 0.75rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.95rem;
-            transition: all 0.2s;
+            max-width: 320px;
         }
 
-        .search-bar:focus {
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
             outline: none;
+            color: #334155;
+        }
+
+        .search-input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        .data-table th {
-            text-align: left;
-            padding: 1rem;
-            border-bottom: 2px solid #e2e8f0;
-            font-weight: 600;
-            color: #64748b;
-            background-color: #f8fafc;
-        }
-
-        .data-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
-            vertical-align: middle;
-        }
-
-        .data-table tr:hover td {
-            background-color: #f8fafc;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.6rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
+        .count-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
-        .badge.allocated {
-            background-color: #dcfce7;
-            color: #166534;
+        /* Table Design */
+        .table-responsive {
+            overflow-x: auto;
         }
 
-        .badge.unassigned {
-            background-color: #fee2e2;
-            color: #991b1b;
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
         }
 
-        .badge.pending {
+        .modern-table th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 600;
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .modern-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            color: #334155;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .modern-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .modern-table tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Custom Information Cells */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .avatar-0 {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .avatar-1 {
+            background-color: #fce7f3;
+            color: #9d174d;
+        }
+
+        .avatar-2 {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Dynamic Avatar Colors based on first char logic in css not possible, keeping static styled for now or inline */
+        .user-name {
+            font-weight: 500;
+            color: #0f172a;
+            display: block;
+        }
+
+        .user-meta {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pill.allocated {
+            background-color: #ecfdf5;
+            color: #047857;
+        }
+
+        .status-pill.pending {
             background-color: #f1f5f9;
             color: #475569;
         }
 
-        .btn-icon-only {
-            padding: 0.5rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.375rem;
-            transition: background-color 0.2s;
+        .status-pill.unassigned {
+            background-color: #fef2f2;
+            color: #b91c1c;
         }
 
-        .btn-icon-only:hover {
-            background-color: #f1f5f9;
+        /* Action Buttons */
+        .action-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            color: #94a3b8;
+            transition: all 0.2s;
         }
 
-        .action-group {
-            display: flex;
-            gap: 0.5rem;
+        .action-btn:hover {
+            background: #f1f5f9;
+            color: var(--primary);
         }
 
-        .avatar-initial {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 0.75rem;
+        .action-btn.delete:hover {
+            color: #ef4444;
+            background: #fef2f2;
         }
 
-        .student-cell {
-            display: flex;
-            align-items: center;
+        /* Empty State */
+        .empty-placeholder {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        /* Primary Button Override */
+        .btn-primary-soft {
+            background: white;
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary-soft:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- Header -->
+    <div class="main-container">
+        <!-- Dashboard Header -->
         <header class="page-header">
             <div>
-                <div class="breadcrumb">
-                    <a href="{{ url_for('dashboard') }}">Dashboard</a> / Students
-                </div>
-                <h1>Student Registry</h1>
-                <p class="subtitle">Manage {{ students|length }} registered students</p>
+                <h1 class="page-title">Student Registry</h1>
+                <p class="page-subtitle">Manage, track, and allocate students.</p>
             </div>
             <div>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary-soft"
+                    style="text-decoration: none; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        viewBox="0 0 16 16" style="margin-right: 0.5rem;">
+                        viewBox="0 0 16 16">
                         <path fill-rule="evenodd"
                             d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
                     </svg>
@@ -156,108 +284,114 @@
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <div style="margin-bottom: 2rem;">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" style="margin-bottom: 1.5rem;">{{ message }}</div>
+        {% endfor %}
         {% endif %}
         {% endwith %}
 
-        <div class="card" style="padding: 0;">
-            <!-- Toolbar -->
-            <div
-                style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <input type="text" id="studentSearch" class="search-bar" placeholder="Search by name, ID, or email..."
-                    style="margin-bottom: 0;">
-
-                <div style="font-size: 0.85rem; color: var(--text-muted);">
-                    Showing all records
+        <!-- Main Card -->
+        <div class="content-card">
+            <div class="toolbar">
+                <div class="search-group">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        fill="currentColor" viewBox="0 0 16 16">
+                        <path
+                            d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                    </svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search students...">
+                </div>
+                <div class="count-badge" id="countBadge">
+                    {{ students|length }} Students
                 </div>
             </div>
 
-            <!-- Table -->
-            <div style="overflow-x: auto;">
-                <table class="data-table" id="studentsTable">
+            <div class="table-responsive">
+                <table class="modern-table" id="studentsTable">
                     <thead>
                         <tr>
-                            <th>Student Name</th>
-                            <th>ID / Roll No</th>
-                            <th>Contact Info</th>
-                            <th>Department</th>
+                            <th>Student</th>
+                            <th>Reference ID</th>
+                            <th>Contact</th>
                             <th>GPA</th>
-                            <th>Allocation Status</th>
+                            <th>Status</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for student in students %}
                         <tr>
+                            <!-- Name & Avatar -->
                             <td>
-                                <div class="student-cell">
-                                    <div class="avatar-initial">{{ student.name[0] if student.name else '?' }}</div>
+                                <div class="user-info">
+                                    <div class="user-avatar avatar-{{ loop.index % 3 }}">
+                                        {{ student.name[0] if student.name else '?' }}
+                                    </div>
                                     <div>
-                                        <div style="font-weight: 500;">{{ student.name }}</div>
-                                        <div style="font-size: 0.8rem; color: var(--text-muted);">{{
-                                            student.student_class or 'Class N/A' }}</div>
+                                        <span class="user-name">{{ student.name }}</span>
+                                        <span class="user-meta">{{ student.department or 'No Dept' }}</span>
                                     </div>
                                 </div>
                             </td>
+
+                            <!-- IDs -->
                             <td>
-                                <div style="font-weight: 500;">{{ student.student_id }}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">{{ student.roll_no or '-' }}
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-weight: 500; font-size: 0.9rem;">{{ student.student_id }}</span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">{{ student.roll_no or ''
+                                        }}</span>
                                 </div>
                             </td>
+
+                            <!-- Contact -->
                             <td>
-                                <div>{{ student.email or '-' }}</div>
+                                <div style="font-size: 0.9rem;">{{ student.email }}</div>
                                 <div style="font-size: 0.8rem; color: var(--text-muted);">{{ student.mobile_no or '' }}
                                 </div>
                             </td>
+
+                            <!-- GPA -->
                             <td>
                                 <span
-                                    style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">
-                                    {{ student.department or 'General' }}
+                                    style="font-family: monospace; font-weight: 600; background: #f8fafc; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                    {{ "%.2f"|format(student.gpa) if student.gpa else '-' }}
                                 </span>
                             </td>
-                            <td>
-                                {{ "%.2f"|format(student.gpa) if student.gpa else '-' }}
-                            </td>
+
+                            <!-- Status -->
                             <td>
                                 {% if student.allocation_status == 'Allocated' %}
-                                <span class="badge allocated">Allocated</span>
+                                <span class="status-pill allocated">Allocated</span>
                                 {% elif student.allocation_status == 'Unassigned' %}
-                                <span class="badge unassigned">Unassigned</span>
+                                <span class="status-pill unassigned">Unassigned</span>
                                 {% else %}
-                                <span class="badge pending">Pending</span>
+                                <span class="status-pill pending">Pending</span>
                                 {% endif %}
                             </td>
-                            <td style="text-align: right;">
-                                <div class="action-group" style="justify-content: flex-end;">
-                                    <a href="{{ url_for('edit_student', id=student.id) }}" class="btn-icon-only"
-                                        title="Edit Student">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#64748b"
-                                            viewBox="0 0 16 16">
-                                            <path
-                                                d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
-                                        </svg>
-                                    </a>
 
-                                    <form action="{{ url_for('delete_student', id=student.id) }}" method="POST"
-                                        style="display: inline;"
-                                        onsubmit="return confirm('Are you sure you want to delete {{ student.name }}? This cannot be undone.');">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn-icon-only" title="Delete Student"
-                                            style="background: none; border: none; cursor: pointer;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                fill="#ef4444" viewBox="0 0 16 16">
-                                                <path
-                                                    d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                                <path fill-rule="evenodd"
-                                                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
+                            <!-- Actions -->
+                            <td style="text-align: right;">
+                                <a href="{{ url_for('edit_student', id=student.id) }}" class="action-btn" title="Edit">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
+                                    </svg>
+                                </a>
+                                <form action="{{ url_for('delete_student', id=student.id) }}" method="POST"
+                                    style="display: inline;"
+                                    onsubmit="return confirm('Ensure this student has no crucial dependencies before deleting.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="action-btn delete" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" viewBox="0 0 16 16">
+                                            <path
+                                                d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                                            <path fill-rule="evenodd"
+                                                d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                        </svg>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}
@@ -265,31 +399,38 @@
                 </table>
 
                 {% if not students %}
-                <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#cbd5e1" viewBox="0 0 16 16"
+                <div class="empty-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#e2e8f0" viewBox="0 0 16 16"
                         style="margin-bottom: 1rem;">
                         <path
                             d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-5.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
                     </svg>
-                    <p>No students found in the system.</p>
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-sm" style="margin-top: 1rem;">Import
-                        Students</a>
+                    <h3>No Records Found</h3>
+                    <p>There are currently no students in the registry.</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Simple Table Search Script -->
+    <!-- Search Interaction -->
     <script>
-        document.getElementById('studentSearch').addEventListener('keyup', function () {
-            let filter = this.value.toLowerCase();
-            let rows = document.querySelectorAll('#studentsTable tbody tr');
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#studentsTable tbody tr');
+            let visibleCount = 0;
 
             rows.forEach(row => {
-                let text = row.textContent.toLowerCase();
-                row.style.display = text.includes(filter) ? '' : 'none';
+                const text = row.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             });
+
+            document.getElementById('countBadge').textContent = `${visibleCount} Students`;
         });
     </script>
 </body>
