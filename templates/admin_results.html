@@ -119,6 +119,7 @@
                                 <th style="text-align: left;">Course</th>
                                 <th style="text-align: left;">Occupancy Status</th>
                                 <th style="text-align: right;">Seats Left</th>
+                                <th style="text-align: right;">Export</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,6 +144,18 @@
                                 <td
                                     style="padding: 0.75rem 0.5rem; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: bold;">
                                     {{ [0, course.capacity - count]|max }}
+                                </td>
+                                <td
+                                    style="padding: 0.75rem 0.5rem; border-bottom: 1px solid #f1f5f9; text-align: right;">
+                                    {% if count > 0 %}
+                                    <a href="{{ url_for('export_course_data', course_id=course.id) }}"
+                                        class="btn btn-sm btn-secondary"
+                                        style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                        csv
+                                    </a>
+                                    {% else %}
+                                    <span style="color: #cbd5e1; font-size: 0.75rem;">-</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

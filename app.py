@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+from io import BytesIO, StringIO
 import pandas as pd
 from models import db, User, Student, Course, SystemConfig
 from data_processor import DataProcessor
@@ -583,6 +584,52 @@ def init_db_command():
         print("Default system configuration initialized.")
     
     print("Database initialized successfully.")
+
+@app.route('/admin/export_course/<int:course_id>')
+@login_required
+def export_course_data(course_id):
+    if current_user.role != 'admin':
+        flash('Unauthorized access.', 'error')
+        return redirect(url_for('dashboard'))
+
+    course = Course.query.get(course_id)
+    if not course:
+        flash('Course not found.', 'error')
+        return redirect(url_for('admin_results'))
+
+    # Fetch students allocated to this course
+    students = Student.query.filter_by(allocated_course_id=course.id).all()
+    
+    if not students:
+        flash(f'No students allocated to {course.name}.', 'warning')
+        return redirect(url_for('admin_results'))
+
+    # Create CSV data
+    data = []
+    for s in students:
+        data.append({
+            'Student ID': s.student_id,
+            'Name': s.name,
+            'Department': s.department,
+            'Class': s.student_class,
+            'Roll No': s.roll_no,
+            'Mobile': s.mobile_no,
+            'Email': s.email
+        })
+    
+    df = pd.DataFrame(data)
+    
+    # Generate response
+    output = StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    
+    return send_file(
+        BytesIO(output.getvalue().encode()),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'{course.name.replace(" ", "_")}_Allocations.csv'
+    )
 
 if __name__ == "__main__":
     # Check if we are in development mode (default to true for local run)
