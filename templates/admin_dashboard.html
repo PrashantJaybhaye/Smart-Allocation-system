@@ -153,7 +153,7 @@
         <!-- Action Section: Run Allocation -->
         <div class="card" style="margin-top: 2rem; text-align: center; border: 2px solid var(--primary);">
             <h3>3. Run Optimization Engine</h3>
-            <p>This will execute the priority-matching algorithm (GPA + Submission Time) for all active students.</p>
+            <p>This will execute the priority-matching algorithm (Submission Time) for all active students.</p>
             <form action="{{ url_for('run_allocation') }}" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn" style="padding: 1rem 3rem; font-size: 1.2rem; margin-top: 1rem;">

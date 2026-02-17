@@ -179,7 +179,7 @@
                 You have not been assigned a course in this round.
             </p>
             <p style="color: #7f1d1d; font-size: 0.9rem;">
-                This may be due to high demand for your preferred choices or GPA cutoffs. Please contact the
+                This may be due to high demand for your preferred choices. Please contact the
                 administration for the next steps or wait for the second round.
             </p>
             {% endif %}
@@ -252,6 +252,7 @@
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                 {% if student %}
                 <!-- Profile Card -->
+
                 <div class="card" style="padding: 1.5rem;">
                     <h4
                         style="margin-top: 0; font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
@@ -259,25 +260,42 @@
 
                     <div style="margin-bottom: 1rem;">
                         <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Full Name</span>
-                        <span style="font-weight: 500; color: #1e293b;">{{ student.name }}</span>
+                        <span style="font-weight: 500; color: #1e293b; font-size: 1.1rem;">{{ student.name }}</span>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">GPA</span>
-                            <span style="font-weight: 600; color: var(--primary);">{{ "%.2f"|format(student.gpa) if
-                                student.gpa else '-' }}</span>
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Student ID</span>
+                            <span style="font-weight: 500; color: #1e293b;">{{ student.student_id }}</span>
                         </div>
+                        <div>
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Roll No</span>
+                            <span style="font-weight: 500; color: #1e293b;">{{ student.roll_no or '-' }}</span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
                             <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Class</span>
                             <span style="font-weight: 500; color: #1e293b;">{{ student.student_class or '-' }}</span>
                         </div>
+                        <div>
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Department</span>
+                            <span style="font-weight: 500; color: #1e293b;">{{ student.department or '-' }}</span>
+                        </div>
                     </div>
 
-                    <div style="margin-bottom: 0;">
-                        <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Department</span>
-                        <span style="font-weight: 500; color: #1e293b; font-size: 0.9rem;">{{ student.department or
-                            'General' }}</span>
+                    <div style="border-top: 1px solid #f1f5f9; padding-top: 1rem; margin-top: 0.5rem;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Email Address</span>
+                            <span style="font-weight: 500; color: #334155; font-size: 0.9rem;">{{ student.email or '-'
+                                }}</span>
+                        </div>
+                        <div>
+                            <span style="display: block; font-size: 0.8rem; color: #94a3b8;">Mobile Number</span>
+                            <span style="font-weight: 500; color: #334155; font-size: 0.9rem;">{{ student.mobile_no or
+                                '-' }}</span>
+                        </div>
                     </div>
                 </div>
 

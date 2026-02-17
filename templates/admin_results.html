@@ -159,7 +159,7 @@
                         <thead>
                             <tr>
                                 <th style="text-align: left;">Student ID</th>
-                                <th style="text-align: left;">GPA</th>
+                                <!-- GPA Removed -->
                                 <th style="text-align: left;">Status</th>
                                 <th style="text-align: left;">Allocated Course</th>
                             </tr>
@@ -168,8 +168,7 @@
                             {% for student in students %}
                             <tr>
                                 <td style="padding: 0.75rem;">{{ student.student_id }}</td>
-                                <td style="padding: 0.75rem;">{{ "%.2f"|format(student.gpa) if student.gpa else 'N/A' }}
-                                </td>
+                                <!-- GPA Removed -->
                                 <td style="padding: 0.75rem;">
                                     <span
                                         class="badge {{ 'allocated' if student.allocation_status == 'Allocated' else 'unassigned' }}"

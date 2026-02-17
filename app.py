@@ -414,8 +414,8 @@ def upload_students():
                 prefs = [row[f'Preference {i}'] for i in range(1, 9) if f'Preference {i}' in row and pd.notna(row[f'Preference {i}'])]
                 student.preferences = prefs
                 
-                # Assume GPA is in the file if present
-                if 'GPA' in row: student.gpa = float(row['GPA'])
+                # GPA removed
+                # if 'GPA' in row: student.gpa = float(row['GPA'])
                 
             db.session.commit()
             flash('Students imported successfully!', 'success')

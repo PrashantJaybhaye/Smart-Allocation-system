@@ -6,9 +6,9 @@ class AllocationEngine:
         :param students: List of Student model objects
         :param courses: List of Course model objects
         """
-        # Sort students by priority: GPA (descending) and then Submission Time (ascending)
+        # Sort students by priority: Submission Time (ascending)
         # Handle potential None values for robustness
-        self.students = sorted(students, key=lambda s: (-(s.gpa or 0.0), s.submission_time or datetime.max))
+        self.students = sorted(students, key=lambda s: s.submission_time or datetime.max)
         self.courses = {c.name: c for c in courses}
         self.course_usage = {c.name: 0 for c in courses}
         
@@ -52,7 +52,7 @@ class AllocationEngine:
             self.allocations.append({
                 'Student ID': student.student_id,
                 'Name': student.name,
-                'GPA': student.gpa,
+                # 'GPA': student.gpa, # Removed
                 'Allocated Course': allocated_course_name,
                 'Status': student.allocation_status
             })

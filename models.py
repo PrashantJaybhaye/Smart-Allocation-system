@@ -34,7 +34,7 @@ class Student(db.Model):
     student_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150))
-    gpa = db.Column(db.Float, default=0.0) # For priority allocation
+    # gpa = db.Column(db.Float, default=0.0) # Removed
     submission_time = db.Column(db.DateTime, nullable=True)
     
     # Store preferences as a JSON or a related table
@@ -60,17 +60,11 @@ class Student(db.Model):
         all_courses = Course.query.all()
         recs = []
         
-        # High GPA logic
-        if self.gpa >= 3.5:
-            tech_courses = ["Artificial Intelligence", "Data Science", "Machine Learning"]
-            recs = [c.name for c in all_courses if c.name in tech_courses and c.enrolled_count < c.capacity]
-        
         # Balance logic: Recommend available courses with most seats left
-        if not recs:
-            available_courses = [c for c in all_courses if c.enrolled_count < c.capacity]
-            if available_courses:
-                sorted_available = sorted(available_courses, key=lambda x: (x.capacity - x.enrolled_count), reverse=True)
-                recs = [c.name for c in sorted_available[:2]]
+        available_courses = [c for c in all_courses if c.enrolled_count < c.capacity]
+        if available_courses:
+            sorted_available = sorted(available_courses, key=lambda x: (x.capacity - x.enrolled_count), reverse=True)
+            recs = [c.name for c in sorted_available[:2]]
             
         return recs[:3]
 
