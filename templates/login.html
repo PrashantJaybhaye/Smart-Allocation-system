@@ -4,211 +4,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Smart Course Allocation</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <title>Log in - Smart Allocation</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --surface: #ffffff;
-            --border-subtle: #e2e8f0;
-            --text-secondary: #64748b;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background-color: #f8fafc;
-            min-height: 100vh;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            background-color: #ffffff;
+        }
+
+        /* Left Side - Image & Brand */
+        .brand-side {
+            flex: 1.2;
+            position: relative;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            color: white;
+            padding: 3rem;
+        }
+
+        .brand-bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            filter: contrast(1.05) saturate(1.2) brightness(1.05);
+        }
+
+        .brand-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, 0.7) 100%);
+            z-index: 1;
+        }
+
+        .brand-overlay-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-logo-top {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 2;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
             display: flex;
             align-items: center;
+            gap: 10px;
+        }
+
+        .brand-heading {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        .brand-subtext {
+            font-size: 1.125rem;
+            line-height: 1.5;
+            opacity: 0.9;
+            color: #f8fafc;
+            max-width: 480px;
+            font-weight: 400;
+        }
+
+        /* Right Side - Login Form */
+        .login-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            font-family: 'Inter', sans-serif;
-            color: #1e293b;
-            margin: 0;
-        }
-
-        .auth-wrapper {
-            width: 100%;
-            max-width: 420px;
             padding: 2rem;
+            background: white;
+            position: relative;
+            overflow-y: auto;
         }
 
-        .brand-section {
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
             text-align: center;
             margin-bottom: 2.5rem;
         }
 
-        .brand-logo {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
-            border-radius: 16px;
-            margin: 0 auto 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .brand-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin: 0 0 0.5rem 0;
-            letter-spacing: -0.025em;
-        }
-
-        .brand-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        .login-card {
-            background: var(--surface);
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-subtle);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 500;
+        .login-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #111;
             margin-bottom: 0.5rem;
-            color: #334155;
-            font-size: 0.9rem;
+            letter-spacing: -0.02em;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
+        .login-subtitle {
             font-size: 0.95rem;
-            transition: all 0.2s;
-            outline: none;
-            color: #1e293b;
-            background-color: #f8fafc;
+            color: #666;
         }
 
-        .form-control:focus {
-            border-color: var(--primary);
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 0.875rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 0.5rem;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .footer-text {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .footer-link {
-            color: var(--primary);
+        .login-subtitle a {
+            color: #4f46e5;
+            /* Distinct blue like the image */
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
         }
 
-        .footer-link:hover {
+        .login-subtitle a:hover {
             text-decoration: underline;
         }
 
-        /* Alert Styling overrides */
-        .alert {
-            padding: 0.75rem 1rem;
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
+            /* Slightly more rounded */
+            font-size: 1rem;
+            color: #111;
+            background: #fff;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #a3a3a3;
+            /* Darker grey on focus */
+            box-shadow: 0 0 0 1px #a3a3a3;
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .btn-black {
+            width: 100%;
+            padding: 1rem;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            /* Fully rounded pill shape like image */
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-black:hover {
+            opacity: 0.85;
+        }
+
+        /* Divider */
+        .divider {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            margin: 1.5rem 0;
+            color: #9ca3af;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        /* Social Buttons */
+        .social-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0.8rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 30px;
+            /* Fully rounded pill shape */
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #111;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: background 0.1s;
+            text-decoration: none;
+        }
+
+        .social-btn:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .forgot-password a {
+            color: #666;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .forgot-password a:hover {
+            color: #111;
+            text-decoration: underline;
+        }
+
+        /* Alert Messages from Flash */
+        .alert-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .alert {
+            padding: 0.8rem;
+            border-radius: 8px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .brand-side {
+                display: none;
+            }
+
+            .login-side {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="auth-wrapper">
-        <div class="brand-section">
-            <div class="brand-logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                    <path
-                        d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z" />
-                </svg>
-            </div>
-            <h1 class="brand-title">Smart Allocation</h1>
-            <p class="brand-subtitle">Sign in to manage your academic journey</p>
-        </div>
+    <!-- Left Side: Brand Image -->
+    <div class="brand-side">
+        <!-- Using a high quality 3D abstract render similar to Runway's aesthetic -->
+        <img src="{{ url_for('static', filename='login_banner.png') }}" alt="Abstract Art" class="brand-bg-image">
+        <div class="brand-overlay"></div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <div class="brand-logo-top">
+            <!-- Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                    d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                    d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z" />
             </svg>
-            {{ message }}
+            <span>SmartAllocation</span>
         </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
 
-        <div class="login-card">
+        <div class="brand-overlay-content">
+            <h1 class="brand-heading">Smart Course<br>Allocation System</h1>
+            <p class="brand-subtext">Streamline your academic planning and resource distribution efficiently.</p>
+        </div>
+    </div>
+
+    <!-- Right Side: Login Form -->
+    <div class="login-side">
+        <div class="login-container">
+            <div class="login-header">
+                <h2 class="login-title">Welcome to SmartAllocation</h2>
+                <p class="login-subtitle">
+                    Don't have an account? <a href="{{ url_for('register') }}">Sign up for free</a>
+                </p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="alert-messages">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Login Form -->
             <form method="POST" action="{{ url_for('login') }}" id="loginForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="form-group">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" id="username" name="username" required class="form-control"
-                        placeholder="Enter your ID" autofocus>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Username or Email"
+                        required autofocus>
                 </div>
 
                 <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" required class="form-control"
-                        placeholder="Enter your password">
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Password"
+                        required>
                 </div>
 
-                <button type="submit" class="btn-primary" id="loginBtn">
-                    <span>Sign In</span>
+                <button type="submit" class="btn-black">
+                    Log in
                 </button>
-
-                <div class="footer-text">
-                    Don't have an account?
-                    <a href="{{ url_for('register') }}" class="footer-link">Register now</a>
-                </div>
             </form>
-        </div>
 
-        <div style="text-align: center; margin-top: 2rem; color: #94a3b8; font-size: 0.8rem;">
-            &copy; 2026 Admin Allocation System
+
+
+            <div class="forgot-password">
+                <a href="#">Forgot Password</a>
+            </div>
         </div>
     </div>
-
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
