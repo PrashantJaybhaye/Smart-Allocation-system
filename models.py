@@ -34,7 +34,7 @@ class Student(db.Model):
     student_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150))
-    # gpa = db.Column(db.Float, default=0.0) # Removed
+
     submission_time = db.Column(db.DateTime, nullable=True)
     
     # Store preferences as a JSON or a related table

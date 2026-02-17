@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -415,8 +415,7 @@ def upload_students():
                 prefs = [row[f'Preference {i}'] for i in range(1, 9) if f'Preference {i}' in row and pd.notna(row[f'Preference {i}'])]
                 student.preferences = prefs
                 
-                # GPA removed
-                # if 'GPA' in row: student.gpa = float(row['GPA'])
+
                 
             db.session.commit()
             flash('Students imported successfully!', 'success')
@@ -448,10 +447,10 @@ def setup_courses():
         return redirect(url_for('dashboard'))
     
     course = Course.query.filter_by(name=name).first()
-    # faculty_name is no longer used/collected
+
     
     if not course:
-        course = Course(name=name, capacity=cap) # Faculty removed
+        course = Course(name=name, capacity=cap)
         db.session.add(course)
     else:
         course.capacity = cap

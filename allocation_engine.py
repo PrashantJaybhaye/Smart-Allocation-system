@@ -52,7 +52,6 @@ class AllocationEngine:
             self.allocations.append({
                 'Student ID': student.student_id,
                 'Name': student.name,
-                # 'GPA': student.gpa, # Removed
                 'Allocated Course': allocated_course_name,
                 'Status': student.allocation_status
             })

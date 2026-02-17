@@ -50,8 +50,7 @@ class DataProcessor:
                 'Mandatory Non Credit Course Choices [Priority No. 8]': 'Preference 8',
             })
         
-        # We also need a reverse map to show original names in the UI later? 
-        # Actually, let's just make the internal logic work with these names.
+
         
         # Rename identified columns for internal processing
         df = df.rename(columns={col: column_mapping[col] for col in df.columns if col in column_mapping})

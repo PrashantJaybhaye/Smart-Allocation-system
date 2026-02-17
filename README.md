@@ -1,133 +1,136 @@
 # Smart Student Course Allocation System 🎓
 
-A robust, secure, and modern web application built with Flask for automating the course allocation process for students. The system ensures fairness and efficiency by using a priority-based matching algorithm.
+A robust, secure, and modern web application built with **Flask** for automating the course allocation process for university students. The system ensures fairness and efficiency by using a **First-Come-First-Serve (FCFS)** based matching algorithm, prioritizing students based on their submission timestamp.
 
 ---
 
-## 🚀 Features
+## 🚀 Key Features
 
-- **Intelligent Allocation Engine**:
-  - **Priority Sorting**: Students are ranked based on **GPA (descending)** and **Submission Timestamp (ascending)**.
-  - **Preference Matching**: Automatically assigns students to their highest available choice based on course capacity.
-- **Modern UI/UX**: Responsive dashboard with glassmorphism design, real-time analytics, and smooth transitions.
-- **Security First**:
-  - CSRF protection on all forms.
-  - Password hashing via `scrypt`.
-  - Admin-only access controlled by environment-based authentication.
-- **Interactive Analytics**: Visualized course demand and occupancy rates.
-- **Comprehensive Reporting**: Export allocation results to **Excel** or professional **PDF** formats.
-- **Admin Control Panel**: Toggle preference edits, reset system state, and manage course capacities.
+### 🔹 For Administrators
+
+- **Automated Allocation**: One-click execution of the allocation algorithm based on course capacity and student preferences.
+- **Fairness Priority**: Students are strictly prioritized by their **Submission Timestamp**, ensuring a fair FCFS process.
+- **Course Management**: Add, edit, and delete courses with real-time capacity tracking.
+- **Student Management**:
+  - Bulk upload students via **Excel/CSV**.
+  - Manually edit student details.
+  - Reset system data (Clear all students/courses) for new cycles.
+- **System Configuration**: Toggle "Re-submission" mode to allow or block students from changing their preferences.
+- **Analytics Dashboard**:
+  - Real-time visualization of course demand vs. capacity.
+  - Allocation success rates.
+  - Faculty load distribution stats.
+- **Export Reports**: Generate comprehensive results in **Excel** and professional **PDF** formats.
+
+### 🔹 For Students
+
+- **Secure Access**: Individual login accounts for every student.
+- **Preference Submission**: Interactive drag-and-drop or selection interface to rank courses (Top 8 choices).
+- **Personalized Dashboard**: View allocation status, assigned course, and profile details.
+- **Mobile-Responsive**: Fully optimized for phones and tablets.
 
 ---
 
-## 🛠️ Prerequisites
+## 🛠️ Tech Stack
 
-Before you begin, ensure you have the following installed:
-
-- **Python 3.12+**
-- **Git**
+- **Backend**: Python (Flask), SQLAlchemy (ORM)
+- **Database**: SQLite (Built-in, zero configuration)
+- **Frontend**: HTML5, CSS3 (Custom Glassmorphism Design), JavaScript
+- **Reporting**: ReportLab (PDF), Pandas/OpenPyXL (Excel)
+- **Security**: Flask-Login, CSRF Protection, Werkzeug Security
 
 ---
 
-## ⚙️ Installation & Setup (Step-by-Step)
+## ⚙️ Installation & Setup
 
 ### 1. Clone the Repository
 
-```powershell
+```bash
 git clone <your-repo-url>
 cd SmartCourseAllocation
 ```
 
-### 2. Set Up a Virtual Environment
+### 2. Create a Virtual Environment
 
 **Windows:**
 
 ```powershell
-python -m venv venv
-.\venv\Scripts\activate
+python -m venv .venv
+.\.venv\Scripts\activate
 ```
 
 **macOS/Linux:**
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 ### 3. Install Dependencies
 
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
 ### 4. Initialize the Database
 
-This creates the SQLite database and sets up the default admin account.
+This command creates the database file and sets up the default admin account.
 
-```powershell
-$env:FLASK_APP="app.py"
-python -m flask init-db
+```bash
+flask init-db
 ```
 
-### 5. Run the Application (Development)
+_Output: Admin user created with username 'admin'_
 
-```powershell
-python -m flask run
+### 5. Run the Application
+
+```bash
+python app.py
 ```
 
-_Visit **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser._
+Visit **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser.
 
 ---
 
-## 🌐 Production Deployment
+## 🔑 Default Credentials
 
-For production environments, it is recommended to use a WSGI server like **Gunicorn**.
-
-### Running with Gunicorn
-
-```powershell
-gunicorn -w 4 -b 0.0.0.0:8000 app:app
-```
-
-- `-w 4`: Number of worker processes.
-- `-b 0.0.0.0:8000`: Binds the app to all interfaces on port 8000.
-
----
-
-## 🔑 Accessing the System
-
-### Admin Credentials
+### Admin Account
 
 - **Username**: `admin`
-- **Password**: Defined in your `.env` file (Default: `admin123`)
+- **Password**: `admin123` (Change this in `.env` for production!)
 
-### Student Access
+### Student Account
 
-- Students must register via the **Registration** page.
-- Once registered, they can login and submit their course preferences.
+- **Registration**: Students can register themselves via the `/register` page.
+- **Bulk Upload**: Admin can upload a CSV with columns: `Student ID`, `Name`.
 
 ---
 
 ## 📂 Project Structure
 
-- `app.py`: Main controller, routing, and Flask application factory.
-- `models.py`: Database schema (Users, Students, Courses, Config).
-- `allocation_engine.py`: Core logic for priority-matching and analytics.
-- `data_processor.py`: Logic for parsing CSV/Excel uploads and validation.
-- `report_generator.py`: Generates PDF and Excel export files.
-- `templates/`: Jinja2 templates for the modern frontend.
-- `static/index.css`: Custom CSS variables and styles.
+```
+SmartCourseAllocation/
+├── app.py                 # Main application entry point & routes
+├── models.py              # Database models (User, Student, Course)
+├── allocation_engine.py   # Core logic for preference matching
+├── data_processor.py      # handles CSV/Excel file parsing
+├── report_generator.py    # Generates PDF/Excel reports
+├── requirements.txt       # Project dependencies
+├── instance/              # Contains the SQLite database
+├── static/                # CSS, JS, and images
+└── templates/             # HTML templates (Jinja2)
+```
 
 ---
 
 ## ⚠️ Troubleshooting
 
-- **"Term 'flask' is not recognized"**: On Windows, always use `python -m flask` instead of just `flask` if the command is not in your PATH.
-- **Dependency Issues**: Ensure you have `setuptools` updated (`pip install --upgrade setuptools`) if building `pandas` or `scikit-learn` from source.
-- **Database Reset**: To start fresh, delete `instance/smart_allocation.db` and run `python -m flask init-db` again.
+- **"Command not found: flask"**: Ensure your virtual environment is activated. On Windows, try `python -m flask init-db`.
+- **Database Errors**: If you encounter schema issues, delete the `instance/` folder and run `flask init-db` again to start fresh.
+- **File Uploads**: Ensure your CSV/Excel file headers match the expected format: `Student ID`, `Name`, `Preference 1`, etc.
 
 ---
 
 ## 📝 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License.
