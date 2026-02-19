@@ -175,6 +175,7 @@
                                 <!-- GPA Removed -->
                                 <th style="text-align: left;">Status</th>
                                 <th style="text-align: left;">Allocated Course</th>
+                                <th style="text-align: left;">Submitted At</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -197,6 +198,13 @@
                                     <strong>{{ student.allocated_course.name }}</strong>
                                     {% else %}
                                     <span style="color: var(--text-muted);">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.75rem; font-size: 0.85rem; color: var(--text-muted);">
+                                    {% if student.submission_time %}
+                                    {{ student.submission_time.strftime('%b %d, %Y %I:%M %p') }}
+                                    {% else %}
+                                    <span style="color: #cbd5e1;">-</span>
                                     {% endif %}
                                 </td>
                             </tr>

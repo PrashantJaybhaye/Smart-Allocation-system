@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from io import BytesIO, StringIO
 import pandas as pd
-from models import db, User, Student, Course, SystemConfig
+from models import db, User, Student, Course, SystemConfig, Notice
 from data_processor import DataProcessor
 from allocation_engine import AllocationEngine
 from report_generator import ReportGenerator
@@ -45,7 +45,7 @@ os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 # --- Auth Routes ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -198,13 +198,16 @@ def index():
 @login_required
 def dashboard():
     allow_repref = get_config('allow_repref', 'false').lower() == 'true'
+    notices = Notice.query.order_by(Notice.created_at.desc()).all()
+
     if current_user.role == 'admin':
         students = Student.query.all()
         courses = Course.query.all()
         return render_template('admin_dashboard.html', 
                                students=students, 
                                courses=courses, 
-                               allow_repref=allow_repref)
+                               allow_repref=allow_repref,
+                               notices=notices)
     else:
         student_record = Student.query.filter_by(student_id=current_user.username).first()
         courses = Course.query.all()
@@ -217,12 +220,16 @@ def dashboard():
         # Number of preference slots = min(available courses, 8)
         num_preferences = min(len(courses), 8)
         
+        # Limit to latest 3 notices for students
+        student_notices = notices[:3]
+        
         return render_template('student_dashboard.html', 
                                student=student_record, 
                                courses=courses,
                                recommendations=recommendations,
                                can_submit=can_submit,
-                               num_preferences=num_preferences)
+                               num_preferences=num_preferences,
+                               notices=student_notices)
 
 @app.route('/submit_preferences', methods=['POST'])
 @login_required
@@ -459,6 +466,39 @@ def setup_courses():
     flash(f'Course {name} updated/added.', 'success')
     return redirect(url_for('dashboard'))
 
+@app.route('/admin/add_notice', methods=['POST'])
+@login_required
+def add_notice():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    title = request.form.get('title')
+    content = request.form.get('content')
+    notice_type = request.form.get('type', 'info')
+    
+    if not title or not content:
+        flash('Title and content are required.', 'error')
+        return redirect(url_for('dashboard'))
+        
+    notice = Notice(title=title, content=content, type=notice_type)
+    db.session.add(notice)
+    db.session.commit()
+    flash('Notice added successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/admin/delete_notice/<int:id>', methods=['POST'])
+@login_required
+def delete_notice(id):
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    notice = db.session.get(Notice, id)
+    if notice:
+        db.session.delete(notice)
+        db.session.commit()
+        flash('Notice deleted.', 'success')
+    return redirect(url_for('dashboard'))
+
 @app.route('/admin/run_allocation', methods=['POST'])
 @login_required
 def run_allocation():
@@ -613,7 +653,8 @@ def export_course_data(course_id):
             'Class': s.student_class,
             'Roll No': s.roll_no,
             'Mobile': s.mobile_no,
-            'Email': s.email
+            'Email': s.email,
+            'Submission Time': s.submission_time.strftime('%Y-%m-%d %H:%M:%S') if s.submission_time else 'N/A'
         })
     
     df = pd.DataFrame(data)

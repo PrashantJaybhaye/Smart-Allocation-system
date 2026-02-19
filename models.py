@@ -72,3 +72,10 @@ class SystemConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(50), unique=True, nullable=False)
     value = db.Column(db.String(100))
+
+class Notice(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), default='info') # 'deadline', 'maintenance', 'info'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
