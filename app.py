@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_mail import Mail, Message
+import random
+import string
 from werkzeug.utils import secure_filename
 import os
 from io import BytesIO, StringIO
@@ -33,6 +36,16 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 app.config['OUTPUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
 
 csrf = CSRFProtect(app)
+
+# Mail Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+mail = Mail(app)
+
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -68,6 +81,53 @@ def login():
         flash('Invalid username or password', 'error')
     return render_template('login.html')
 
+@app.route('/send_otp', methods=['POST'])
+def send_otp():
+    email = request.json.get('email')
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'}), 400
+
+    if not re.match(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email.lower()):
+        return jsonify({'success': False, 'message': 'Invalid email format'}), 400
+
+    if Student.query.filter_by(email=email.lower()).first():
+        return jsonify({'success': False, 'message': 'Email already registered'}), 400
+
+    otp = ''.join(random.choices(string.digits, k=6))
+    session['registration_otp'] = otp
+    session['registration_email'] = email.lower()
+
+    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+        print(f"DEV MODE OTP for {email}: {otp}")
+        return jsonify({'success': True, 'message': 'OTP sent (Dev Mode: Check console)'})
+
+    try:
+        msg = Message("Your Smart Course Allocation Registration OTP", recipients=[email])
+        msg.body = f"Hello,\n\nYour Verification OTP code is: {otp}\n\nDo not share this code with anyone.\nIf you did not request this, you can ignore this email."
+        mail.send(msg)
+        return jsonify({'success': True, 'message': 'OTP sent successfully'})
+    except Exception as e:
+        app.logger.exception("Failed to send email")
+        return jsonify({'success': False, 'message': 'Failed to send OTP email. Please check server configuration.'}), 500
+
+@app.route('/verify_otp_async', methods=['POST'])
+def verify_otp_async():
+    email = request.json.get('email')
+    otp_input = request.json.get('otp')
+    
+    session_otp = session.get('registration_otp')
+    session_email = session.get('registration_email')
+    
+    if not email or not otp_input:
+        return jsonify({'success': False, 'message': 'Email and OTP are required'}), 400
+        
+    if not session_otp or not session_email or email.lower() != session_email or otp_input != session_otp:
+        return jsonify({'success': False, 'message': 'Invalid or expired OTP.'}), 400
+        
+    # Valid OTP
+    session['registration_otp_verified'] = True
+    return jsonify({'success': True, 'message': 'Email verified successfully!'})
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -76,13 +136,14 @@ def register():
         password = request.form.get('password', '').strip()
         full_name = request.form.get('full_name', '').strip()
         email = request.form.get('email', '').strip().lower()
+        otp_input = request.form.get('otp', '').strip()
         student_class = request.form.get('student_class', '').strip()
         roll_no = request.form.get('roll_no', '').strip()
         mobile = request.form.get('mobile', '').strip()
         department = request.form.get('department', '').strip()
         
         # Validation
-        if not all([username, password, full_name, email, student_class, roll_no, mobile, department]):
+        if not all([username, password, full_name, email, otp_input, student_class, roll_no, mobile, department]):
             flash('All fields are required.', 'error')
             return render_template('register.html')
 
@@ -109,6 +170,16 @@ def register():
         if not re.match(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email):
            flash('Invalid email address format.', 'error')
            return render_template('register.html')
+           
+        # 4.5. OTP Validation
+        session_otp = session.get('registration_otp')
+        session_email = session.get('registration_email')
+        
+        # If running without email env setup, allow bypass for testing if user enters '123456'
+        # Or match the generated OTP matching exactly to the one saved in session and email
+        if not session_otp or not session_email or email != session_email or otp_input != session_otp:
+            flash('Invalid or expired OTP. Please verify your email again.', 'error')
+            return render_template('register.html')
 
         # 5. Full Name Validation
         if not re.match(r'^[a-zA-Z\s]+$', full_name) or len(full_name) < 3 or len(full_name) > 30:

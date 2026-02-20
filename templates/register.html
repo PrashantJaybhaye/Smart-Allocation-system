@@ -387,8 +387,26 @@
 
                 <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-input" placeholder="student@gmail.com"
-                        required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,63}$">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="email" id="email" name="email" class="form-input" placeholder="student@gmail.com"
+                            required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,63}$" style="flex-grow: 1;">
+                        <button type="button" class="btn-black" id="sendOtpBtn"
+                            style="margin-top: 0; width: auto; padding: 0 1.5rem;" onclick="sendOTP()">Verify</button>
+                    </div>
+                    <div id="otpStatus" style="font-size: 0.8rem; margin-top: 0.5rem; display: none;"></div>
+                </div>
+
+                <div class="form-group" id="otpGroup" style="display: none;">
+                    <label class="form-label" for="otp">Email Verification OTP</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="password" id="otp" name="otp" class="form-input" placeholder="••••••"
+                            pattern="^[0-9]{6}$" maxlength="6"
+                            style="flex-grow: 1; letter-spacing: 0.5rem; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                        <button type="button" class="btn-black" id="verifyOtpBtn"
+                            style="margin-top: 0; width: auto; padding: 0 1.5rem;" onclick="verifyOTP()">Verify
+                            OTP</button>
+                    </div>
+                    <div id="otpVerifyStatus" style="font-size: 0.8rem; margin-top: 0.5rem; display: none;"></div>
                 </div>
 
                 <div class="form-group">
@@ -455,8 +473,9 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-black">
-                    Create Account
+                <button type="submit" class="btn-black" id="registerSubmitBtn" disabled
+                    style="opacity: 0.5; cursor: not-allowed;">
+                    Create Account (Verify Email First)
                 </button>
             </form>
 
@@ -466,6 +485,117 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        function sendOTP() {
+            const emailInput = document.getElementById('email');
+            const email = emailInput.value.trim();
+            const btn = document.getElementById('sendOtpBtn');
+            const statusDiv = document.getElementById('otpStatus');
+            const otpGroup = document.getElementById('otpGroup');
+            const otpInput = document.getElementById('otp');
+
+            // Simple HTML email validation
+            if (!emailInput.checkValidity()) {
+                emailInput.reportValidity();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Sending...";
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = '#64748b';
+            statusDiv.textContent = "Sending OTP to your email...";
+
+            fetch("{{ url_for('send_otp') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify({ email: email })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.style.color = '#166534';
+                        statusDiv.textContent = data.message;
+                        otpGroup.style.display = 'block';
+                        otpInput.setAttribute('required', 'required');
+                        btn.textContent = "Resend OTP";
+                        // Brief cooldown to avoid spam
+                        setTimeout(() => { btn.disabled = false; }, 10000);
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = "Verify";
+                        statusDiv.style.color = '#991b1b';
+                        statusDiv.textContent = data.message;
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.textContent = "Try Again";
+                    statusDiv.style.color = '#991b1b';
+                    statusDiv.textContent = "Network error occurred.";
+                });
+        }
+
+        function verifyOTP() {
+            const email = document.getElementById('email').value.trim();
+            const otpInput = document.getElementById('otp');
+            const otp = otpInput.value.trim();
+            const btn = document.getElementById('verifyOtpBtn');
+            const statusDiv = document.getElementById('otpVerifyStatus');
+            const submitBtn = document.getElementById('registerSubmitBtn');
+
+            if (!otp || otp.length < 6) {
+                otpInput.reportValidity();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Verifying...";
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = '#64748b';
+            statusDiv.textContent = "Verifying your OTP...";
+
+            fetch("{{ url_for('verify_otp_async') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify({ email: email, otp: otp })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.style.color = '#166534';
+                        statusDiv.innerHTML = "<b>✓ Email Verified!</b>";
+                        btn.style.display = 'none';
+                        otpInput.readOnly = true;
+                        document.getElementById('email').readOnly = true;
+                        document.getElementById('sendOtpBtn').style.display = 'none';
+
+                        // Enable submit
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                        submitBtn.textContent = "Create Account";
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = "Verify OTP";
+                        statusDiv.style.color = '#991b1b';
+                        statusDiv.textContent = data.message;
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.textContent = "Try Again";
+                    statusDiv.style.color = '#991b1b';
+                    statusDiv.textContent = "Network error occurred.";
+                });
+        }
+    </script>
 </body>
 
 </html>
