@@ -94,8 +94,10 @@ def send_otp():
     if not re.match(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email.lower()):
         return jsonify({'success': False, 'message': 'Invalid email format'}), 400
 
-    if Student.query.filter_by(email=email.lower()).first():
-        return jsonify({'success': False, 'message': 'Email already registered'}), 400
+    # Check if a user already exists with this email
+    existing_student = Student.query.filter_by(email=email.lower()).first()
+    if existing_student:
+        return jsonify({'success': False, 'message': 'User already exists with this email. Please Login.'}), 400
 
     otp = ''.join(secrets.choice(string.digits) for _ in range(6))
     session['registration_otp'] = otp
@@ -405,6 +407,12 @@ def edit_student(id):
         if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
            flash('Invalid email address format.', 'error')
            return render_template('edit_student.html', student=student)
+
+        # Check for unique email across other students
+        existing_email_student = Student.query.filter_by(email=email).first()
+        if existing_email_student and existing_email_student.id != student.id:
+            flash('Email already registered to another student.', 'error')
+            return render_template('edit_student.html', student=student)
 
         student.name = full_name
         student.email = email

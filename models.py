@@ -33,7 +33,7 @@ class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(150), nullable=False)
-    email = db.Column(db.String(150))
+    email = db.Column(db.String(150), unique=True)
 
     submission_time = db.Column(db.DateTime, nullable=True)
     
