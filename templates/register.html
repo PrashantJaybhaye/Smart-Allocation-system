@@ -236,6 +236,60 @@
             color: #94a3b8;
         }
 
+        .input-group-inline {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.35rem;
+            transition: all 0.2s;
+        }
+
+        .input-group-inline:focus-within {
+            background: #fff;
+            border-color: #000;
+            box-shadow: 0 0 0 1px #000;
+        }
+
+        .input-group-inline input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 0.65rem 1rem;
+            outline: none;
+            font-size: 1rem;
+            color: #0f172a;
+            width: 100%;
+        }
+
+        .input-group-inline input::placeholder {
+            color: #94a3b8;
+        }
+
+        .btn-inline {
+            background-color: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.65rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-inline:hover:not(:disabled) {
+            background-color: #334155;
+        }
+
+        .btn-inline:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #64748b;
+        }
+
         select.form-input {
             padding-right: 2.5rem;
             cursor: pointer;
@@ -387,26 +441,26 @@
 
                 <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="email" id="email" name="email" class="form-input" placeholder="student@gmail.com"
-                            required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,63}$" style="flex-grow: 1;">
-                        <button type="button" class="btn-black" id="sendOtpBtn"
-                            style="margin-top: 0; width: auto; padding: 0 1.5rem;" onclick="sendOTP()">Verify</button>
+                    <div class="input-group-inline">
+                        <input type="email" id="email" name="email" placeholder="student@gmail.com" required
+                            pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,63}">
+                        <button type="button" class="btn-inline" id="sendOtpBtn" onclick="sendOTP()">Verify</button>
                     </div>
                     <div id="otpStatus" style="font-size: 0.8rem; margin-top: 0.5rem; display: none;"></div>
                 </div>
 
-                <div class="form-group" id="otpGroup" style="display: none;">
+                <div class="form-group" id="otpGroup" style="display: none;" role="region" aria-label="OTP Verification"
+                    aria-expanded="false">
                     <label class="form-label" for="otp">Email Verification OTP</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="password" id="otp" name="otp" class="form-input" placeholder="••••••"
+                    <div class="input-group-inline">
+                        <input type="text" inputmode="numeric" id="otp" name="otp" placeholder="••••••"
                             pattern="^[0-9]{6}$" maxlength="6"
-                            style="flex-grow: 1; letter-spacing: 0.5rem; text-align: center; font-size: 1.2rem; font-weight: bold;">
-                        <button type="button" class="btn-black" id="verifyOtpBtn"
-                            style="margin-top: 0; width: auto; padding: 0 1.5rem;" onclick="verifyOTP()">Verify
+                            style="letter-spacing: 0.5rem; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                        <button type="button" class="btn-inline" id="verifyOtpBtn" onclick="verifyOTP()">Verify
                             OTP</button>
                     </div>
-                    <div id="otpVerifyStatus" style="font-size: 0.8rem; margin-top: 0.5rem; display: none;"></div>
+                    <div id="otpVerifyStatus" style="font-size: 0.8rem; margin-top: 0.5rem; display: none;"
+                        aria-live="polite"></div>
                 </div>
 
                 <div class="form-group">
@@ -473,10 +527,14 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-black" id="registerSubmitBtn" disabled
-                    style="opacity: 0.5; cursor: not-allowed;">
-                    Create Account (Verify Email First)
+                <button type="submit" class="btn-black" id="registerSubmitBtn">
+                    Create Account
                 </button>
+                <noscript>
+                    <div class="alert alert-error" style="margin-top: 1rem;">
+                        JavaScript is required to complete email verification. Please enable it.
+                    </div>
+                </noscript>
             </form>
 
             <div style="text-align: center; margin-top: 2rem; color: #94a3b8; font-size: 0.8rem;">
@@ -501,6 +559,7 @@
             }
 
             btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
             btn.textContent = "Sending...";
             statusDiv.style.display = 'block';
             statusDiv.style.color = '#64748b';
@@ -516,14 +575,16 @@
             })
                 .then(res => res.json())
                 .then(data => {
+                    btn.removeAttribute('aria-busy');
                     if (data.success) {
                         statusDiv.style.color = '#166534';
                         statusDiv.textContent = data.message;
                         otpGroup.style.display = 'block';
+                        otpGroup.setAttribute('aria-expanded', 'true');
                         otpInput.setAttribute('required', 'required');
                         btn.textContent = "Resend OTP";
                         // Brief cooldown to avoid spam
-                        setTimeout(() => { btn.disabled = false; }, 10000);
+                        setTimeout(() => { btn.disabled = false; }, 60000);
                     } else {
                         btn.disabled = false;
                         btn.textContent = "Verify";
@@ -532,6 +593,7 @@
                     }
                 })
                 .catch(err => {
+                    btn.removeAttribute('aria-busy');
                     btn.disabled = false;
                     btn.textContent = "Try Again";
                     statusDiv.style.color = '#991b1b';
@@ -547,12 +609,13 @@
             const statusDiv = document.getElementById('otpVerifyStatus');
             const submitBtn = document.getElementById('registerSubmitBtn');
 
-            if (!otp || otp.length < 6) {
+            if (!otpInput.checkValidity()) {
                 otpInput.reportValidity();
                 return;
             }
 
             btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
             btn.textContent = "Verifying...";
             statusDiv.style.display = 'block';
             statusDiv.style.color = '#64748b';
@@ -568,9 +631,10 @@
             })
                 .then(res => res.json())
                 .then(data => {
+                    btn.removeAttribute('aria-busy');
                     if (data.success) {
                         statusDiv.style.color = '#166534';
-                        statusDiv.innerHTML = "<b>✓ Email Verified!</b>";
+                        statusDiv.textContent = "✓ Email Verified!";
                         btn.style.display = 'none';
                         otpInput.readOnly = true;
                         document.getElementById('email').readOnly = true;
@@ -581,6 +645,7 @@
                         submitBtn.style.opacity = '1';
                         submitBtn.style.cursor = 'pointer';
                         submitBtn.textContent = "Create Account";
+                        submitBtn.focus();
                     } else {
                         btn.disabled = false;
                         btn.textContent = "Verify OTP";
@@ -589,6 +654,7 @@
                     }
                 })
                 .catch(err => {
+                    btn.removeAttribute('aria-busy');
                     btn.disabled = false;
                     btn.textContent = "Try Again";
                     statusDiv.style.color = '#991b1b';

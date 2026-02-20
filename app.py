@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
-import random
+import secrets
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import string
 from werkzeug.utils import secure_filename
 import os
@@ -36,6 +38,7 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 app.config['OUTPUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
 
 csrf = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=["500 per day", "50 per hour"])
 
 # Mail Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -82,6 +85,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/send_otp', methods=['POST'])
+@limiter.limit("5 per hour")
 def send_otp():
     email = request.json.get('email')
     if not email:
@@ -93,9 +97,11 @@ def send_otp():
     if Student.query.filter_by(email=email.lower()).first():
         return jsonify({'success': False, 'message': 'Email already registered'}), 400
 
-    otp = ''.join(random.choices(string.digits, k=6))
+    otp = ''.join(secrets.choice(string.digits) for _ in range(6))
     session['registration_otp'] = otp
     session['registration_email'] = email.lower()
+    session['registration_otp_ts'] = datetime.now().timestamp()
+    session['registration_otp_attempts'] = 0
 
     if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
         print(f"DEV MODE OTP for {email}: {otp}")
@@ -117,15 +123,30 @@ def verify_otp_async():
     
     session_otp = session.get('registration_otp')
     session_email = session.get('registration_email')
+    otp_ts = session.get('registration_otp_ts', 0)
+    attempts = session.get('registration_otp_attempts', 0)
     
     if not email or not otp_input:
         return jsonify({'success': False, 'message': 'Email and OTP are required'}), 400
+
+    if attempts >= 5:
+        session.pop('registration_otp', None)
+        return jsonify({'success': False, 'message': 'Maximum attempts exceeded. Please request a new OTP.'}), 429
+        
+    if (datetime.now().timestamp() - otp_ts) > 900:
+        session.pop('registration_otp', None)
+        return jsonify({'success': False, 'message': 'OTP has expired. Please request a new one.'}), 400
         
     if not session_otp or not session_email or email.lower() != session_email or otp_input != session_otp:
-        return jsonify({'success': False, 'message': 'Invalid or expired OTP.'}), 400
+        session['registration_otp_attempts'] = attempts + 1
+        if session['registration_otp_attempts'] >= 5:
+            session.pop('registration_otp', None)
+            return jsonify({'success': False, 'message': 'Maximum attempts exceeded. Please request a new OTP.'}), 429
+        return jsonify({'success': False, 'message': 'Invalid OTP.'}), 400
         
     # Valid OTP
     session['registration_otp_verified'] = True
+    session.pop('registration_otp', None)
     return jsonify({'success': True, 'message': 'Email verified successfully!'})
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -172,12 +193,10 @@ def register():
            return render_template('register.html')
            
         # 4.5. OTP Validation
-        session_otp = session.get('registration_otp')
+        is_verified = session.get('registration_otp_verified')
         session_email = session.get('registration_email')
         
-        # If running without email env setup, allow bypass for testing if user enters '123456'
-        # Or match the generated OTP matching exactly to the one saved in session and email
-        if not session_otp or not session_email or email != session_email or otp_input != session_otp:
+        if not is_verified or not session_email or email != session_email:
             flash('Invalid or expired OTP. Please verify your email again.', 'error')
             return render_template('register.html')
 
@@ -242,6 +261,9 @@ def register():
                 db.session.add(new_student)
             
             db.session.commit()
+            session.pop('registration_otp', None)
+            session.pop('registration_email', None)
+            session.pop('registration_otp_verified', None)
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
     return render_template('register.html')
