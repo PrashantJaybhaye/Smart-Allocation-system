@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -53,10 +53,6 @@ class Student(db.Model):
 
     def get_recommendations(self):
         """Simple rule-based recommendation logic."""
-        # Only show recommendations after student has submitted preferences
-        if not self.preferences:
-            return []
-
         all_courses = Course.query.all()
         recs = []
         
@@ -78,4 +74,4 @@ class Notice(db.Model):
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text, nullable=False)
     type = db.Column(db.String(50), default='info') # 'deadline', 'maintenance', 'info'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

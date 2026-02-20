@@ -317,3 +317,9 @@ tr:last-child td {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

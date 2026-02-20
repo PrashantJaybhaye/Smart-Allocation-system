@@ -2,29 +2,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const forms = document.querySelectorAll('form');
 
     forms.forEach(form => {
-        const submitBtn = form.querySelector('button[type="submit"]');
+        // Find either a standard button of type submit, or explicitly find .btn-black (used on login/register)
+        const submitBtn = form.querySelector('button[type="submit"]') || form.querySelector('input[type="submit"]');
 
-        // Function to check validity and toggle button
         const checkFormValidity = () => {
             if (!submitBtn) return;
-
-            // Only apply Strict validation disabling for "Create Account"
-            const btnText = submitBtn.innerText.trim().toLowerCase();
-            if (!btnText.includes("create account") && !btnText.includes("register")) {
-                return;
-            }
-
-            if (form.checkValidity()) {
-                submitBtn.removeAttribute('disabled');
-                submitBtn.classList.remove('btn-disabled'); // Optional styling class
-                submitBtn.style.opacity = '1';
-                submitBtn.style.cursor = 'pointer';
-            } else {
-                submitBtn.setAttribute('disabled', 'true');
-                submitBtn.classList.add('btn-disabled');
-                submitBtn.style.opacity = '0.5';
-                submitBtn.style.cursor = 'not-allowed';
-            }
+            // Let the browser handle standard validation (e.g. required dropdowns), 
+            // so we don't prematurely block clicks unless we're strictly enforcing custom UI.
+            // Leaving Native form validation untouched to let user trigger tooltips.
         };
 
         // Initial check
@@ -35,11 +20,9 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('change', checkFormValidity);
 
         form.addEventListener('submit', function (event) {
-            // content of the submit listener remains the same...
             // Check if form is valid (if using browser validation)
             if (!form.checkValidity()) {
-                // If form is invalid, browser shows error, don't show loading
-                event.preventDefault(); // Ensure it doesn't submit
+                // If form is invalid, let the browser handle the error
                 return;
             }
 
@@ -50,10 +33,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Add loading class and spinner
+                // Add loading class
                 submitBtn.classList.add('loading');
 
-                // Save original content
+                // Save original content safely
                 const originalContent = submitBtn.innerHTML;
                 submitBtn.dataset.originalContent = originalContent;
 
@@ -61,20 +44,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 const btnText = submitBtn.innerText.trim().toLowerCase();
                 let loadingText = "Processing...";
 
-                if (btnText.includes("sign in") || btnText.includes("login")) {
+                if (btnText.includes("sign in") || btnText.includes("login") || btnText.includes("log in")) {
                     loadingText = "Signing In...";
                 } else if (btnText.includes("create account") || btnText.includes("register")) {
                     loadingText = "Creating Account...";
-                } else if (btnText.includes("save")) {
+                } else if (btnText.includes("save") || btnText.includes("submit")) {
                     loadingText = "Saving...";
-                } else if (btnText.includes("update")) {
+                } else if (btnText.includes("update") || btnText.includes("add")) {
                     loadingText = "Updating...";
-                } else if (btnText.includes("upload")) {
-                    loadingText = "Uploading...";
+                } else if (btnText.includes("upload") || btnText.includes("import")) {
+                    loadingText = "Importing...";
+                } else if (btnText.includes("start") || btnText.includes("allocate") || btnText.includes("run")) {
+                    loadingText = "Working...";
                 }
 
-                // Inject text only
-                submitBtn.innerText = loadingText;
+                // SVG Spinner
+                const spinner = `<svg style="animation: spin 1s linear infinite; height: 1.1rem; width: 1.1rem; display: inline-block; vertical-align: middle; margin-right: 0.5rem;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25"></circle>
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>`;
+
+                // Inject spinner and text
+                submitBtn.innerHTML = spinner + `<span>${loadingText}</span>`;
+
+                // Use pointer-events none just in case disabled blocks form submission value
+                submitBtn.style.pointerEvents = 'none';
+                submitBtn.style.opacity = '0.7';
+
+                // Use setTimeout to allow form to submit before disabling, 
+                // as disabling a button immediately can sometimes prevent form submission in some browsers.
+                setTimeout(() => {
+                    submitBtn.disabled = true;
+                }, 10);
             }
         });
     });

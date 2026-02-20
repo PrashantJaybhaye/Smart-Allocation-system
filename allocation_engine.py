@@ -7,8 +7,8 @@ class AllocationEngine:
         :param courses: List of Course model objects
         """
         # Sort students by priority: Submission Time (ascending)
-        # Handle potential None values for robustness
-        self.students = sorted(students, key=lambda s: s.submission_time or datetime.max)
+        # Handle potential None values safely by sorting None to the end
+        self.students = sorted(students, key=lambda s: (s.submission_time is None, s.submission_time))
         self.courses = {c.name: c for c in courses}
         self.course_usage = {c.name: 0 for c in courses}
         
@@ -29,6 +29,7 @@ class AllocationEngine:
         self.allocations = []
         for c in self.courses.values():
             self.course_usage[c.name] = 0
+            c.enrolled_count = 0  # Reset DB model count so it syncs later
             # Reset student records for a clean run if necessary
             # (assuming the caller handles DB session or we update them here)
             
@@ -42,12 +43,14 @@ class AllocationEngine:
                     if self.course_usage[course_name] < course.capacity:
                         allocated_course_name = course_name
                         self.course_usage[course_name] += 1
+                        course.enrolled_count += 1
                         student.allocated_course_id = course.id
                         student.allocation_status = 'Allocated'
                         break
             
             if allocated_course_name == "Unassigned":
                 student.allocation_status = 'Unassigned'
+                student.allocated_course_id = None
             
             self.allocations.append({
                 'Student ID': student.student_id,
