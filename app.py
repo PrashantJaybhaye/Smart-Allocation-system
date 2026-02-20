@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 from io import BytesIO, StringIO
@@ -431,8 +430,6 @@ def upload_students():
                 prefs = [row[f'Preference {i}'] for i in range(1, 9) if f'Preference {i}' in row and pd.notna(row[f'Preference {i}'])]
                 student.preferences = prefs
                 
-
-                
             db.session.commit()
             flash('Students imported successfully!', 'success')
         except Exception:
@@ -463,7 +460,6 @@ def setup_courses():
         return redirect(url_for('dashboard'))
     
     course = Course.query.filter_by(name=name).first()
-
     
     if not course:
         course = Course(name=name, capacity=cap)

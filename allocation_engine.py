@@ -77,7 +77,6 @@ class AllocationEngine:
                 if first_pref in course_demand:
                     course_demand[first_pref] += 1
 
-
         # Faculty Distribution (Total Seats per Faculty)
         faculty_dist = {}
         for c in self.courses.values():
