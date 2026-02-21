@@ -110,10 +110,16 @@ def send_otp():
         return jsonify({'success': True, 'message': 'OTP sent (Dev Mode: Check console)'})
 
     try:
-        msg = Message("Your Smart Course Allocation Registration OTP", recipients=[email])
-        msg.body = f"Hello,\n\nYour Verification OTP code is: {otp}\n\nDo not share this code with anyone.\nIf you did not request this, you can ignore this email."
-        mail.send(msg)
-        return jsonify({'success': True, 'message': 'OTP sent successfully'})
+        import socket
+        old_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(10.0) # 10 seconds timeout to prevent freezing
+        try:
+            msg = Message("Your Smart Course Allocation Registration OTP", recipients=[email])
+            msg.body = f"Hello,\n\nYour Verification OTP code is: {otp}\n\nDo not share this code with anyone.\nIf you did not request this, you can ignore this email."
+            mail.send(msg)
+            return jsonify({'success': True, 'message': 'OTP sent successfully'})
+        finally:
+            socket.setdefaulttimeout(old_timeout)
     except Exception as e:
         app.logger.exception("Failed to send email")
         return jsonify({'success': False, 'message': 'Failed to send OTP email. Please check server configuration.'}), 500
