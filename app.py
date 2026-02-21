@@ -47,6 +47,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_TIMEOUT'] = 10.0
 mail = Mail(app)
 
 db.init_app(app)
@@ -110,16 +111,10 @@ def send_otp():
         return jsonify({'success': True, 'message': 'OTP sent (Dev Mode: Check console)'})
 
     try:
-        import socket
-        old_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(10.0) # 10 seconds timeout to prevent freezing
-        try:
-            msg = Message("Your Smart Course Allocation Registration OTP", recipients=[email])
-            msg.body = f"Hello,\n\nYour Verification OTP code is: {otp}\n\nDo not share this code with anyone.\nIf you did not request this, you can ignore this email."
-            mail.send(msg)
-            return jsonify({'success': True, 'message': 'OTP sent successfully'})
-        finally:
-            socket.setdefaulttimeout(old_timeout)
+        msg = Message("Your Smart Course Allocation Registration OTP", recipients=[email])
+        msg.body = f"Hello,\n\nYour Verification OTP code is: {otp}\n\nDo not share this code with anyone.\nIf you did not request this, you can ignore this email."
+        mail.send(msg)
+        return jsonify({'success': True, 'message': 'OTP sent successfully'})
     except Exception as e:
         app.logger.exception("Failed to send email")
         return jsonify({'success': False, 'message': 'Failed to send OTP email. Please check server configuration.'}), 500
