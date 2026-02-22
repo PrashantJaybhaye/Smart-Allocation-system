@@ -318,6 +318,9 @@ def index():
 def dashboard():
     allow_repref = get_config('allow_repref', 'false').lower() == 'true'
     notices = Notice.query.order_by(Notice.created_at.desc()).all()
+    
+    allocation_start = get_config('allocation_start', '')
+    allocation_end = get_config('allocation_end', '')
 
     if current_user.role == 'admin':
         students = Student.query.all()
@@ -326,15 +329,42 @@ def dashboard():
                                students=students, 
                                courses=courses, 
                                allow_repref=allow_repref,
-                               notices=notices)
+                               notices=notices,
+                               allocation_start=allocation_start,
+                               allocation_end=allocation_end)
     else:
         student_record = Student.query.filter_by(student_id=current_user.username).first()
         courses = Course.query.all()
         recommendations = student_record.get_recommendations() if student_record else []
         
+        # Check time window
+        now = datetime.now()
+        out_of_window = False
+        window_message = None
+        window_state = 'open' # Default
+        
+        try:
+            if allocation_start:
+                start_dt = datetime.fromisoformat(allocation_start)
+                if now < start_dt:
+                    out_of_window = True
+                    window_state = 'upcoming'
+                    window_message = f"Preference window opens: {start_dt.strftime('%d %b %Y, %I:%M %p')}"
+            
+            if allocation_end:
+                end_dt = datetime.fromisoformat(allocation_end)
+                if now > end_dt:
+                    out_of_window = True
+                    window_state = 'closed'
+                    window_message = f"Preference window closed: {end_dt.strftime('%d %b %Y, %I:%M %p')}"
+                elif not out_of_window:
+                    window_message = f"Window closes: {end_dt.strftime('%d %b %Y, %I:%M %p')}"
+        except ValueError:
+            pass # Invalid format
+
         # Check if they can still submit
         already_submitted = student_record and student_record.preferences
-        can_submit = not already_submitted or allow_repref
+        can_submit = (not already_submitted or allow_repref) and not out_of_window
         
         # Number of preference slots = min(available courses, 8)
         num_preferences = min(len(courses), 8)
@@ -348,7 +378,12 @@ def dashboard():
                                recommendations=recommendations,
                                can_submit=can_submit,
                                num_preferences=num_preferences,
-                               notices=student_notices)
+                               notices=student_notices,
+                               window_message=window_message,
+                               window_state=window_state,
+                               allocation_start=allocation_start,
+                               allocation_end=allocation_end,
+                               now=now.isoformat())
 
 @app.route('/submit_preferences', methods=['POST'])
 @login_required
@@ -362,6 +397,20 @@ def submit_preferences():
     if student and student.preferences and not allow_repref:
         flash('Preference re-submission is currently disabled.', 'error')
         return redirect(url_for('dashboard'))
+
+    # Time window validation
+    allocation_start = get_config('allocation_start', '')
+    allocation_end = get_config('allocation_end', '')
+    now = datetime.now()
+    try:
+        if allocation_start and now < datetime.fromisoformat(allocation_start):
+            flash('Preference selection has not started yet.', 'error')
+            return redirect(url_for('dashboard'))
+        if allocation_end and now > datetime.fromisoformat(allocation_end):
+            flash('Preference selection window has closed.', 'error')
+            return redirect(url_for('dashboard'))
+    except ValueError:
+        pass
 
     prefs = request.form.getlist('preferences')
     
@@ -690,6 +739,21 @@ def toggle_repref():
     
     status = "enabled" if new_val == 'true' else "disabled"
     flash(f'Student re-preference {status}!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/admin/set_allocation_window', methods=['POST'])
+@login_required
+def set_allocation_window():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    start_time = request.form.get('start_time')
+    end_time = request.form.get('end_time')
+    
+    set_config('allocation_start', start_time if start_time else '')
+    set_config('allocation_end', end_time if end_time else '')
+    
+    flash('Allocation time window updated!', 'success')
     return redirect(url_for('dashboard'))
 
 @app.route('/admin/reset_data', methods=['POST'])

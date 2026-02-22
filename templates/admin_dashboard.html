@@ -413,9 +413,29 @@
         </div>
 
         <!-- System Management & Reset Section -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+        <!-- System Management & Reset Section -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+            
+            <div class="card">
+                <h3>Time Window Settings</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Set the schedule for when students can submit preferences.</p>
+                <form action="{{ url_for('set_allocation_window') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="start_time" style="display: block; font-size: 0.9rem; margin-bottom: 0.25rem;">Start Time (Optional)</label>
+                        <input type="datetime-local" id="start_time" name="start_time" class="form-control" value="{{ allocation_start }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-family: inherit;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="end_time" style="display: block; font-size: 0.9rem; margin-bottom: 0.25rem;">End Time (Optional)</label>
+                        <input type="datetime-local" id="end_time" name="end_time" class="form-control" value="{{ allocation_end }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-family: inherit;">
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Save Schedule</button>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">Leave both fields empty to allow submissions at any time.</p>
+                </form>
+            </div>
+
             <div class="card system-pref-card {{ 'enabled' if allow_repref else '' }}">
-                <h3>System Preferences</h3>
+                <h3>Submission Policy</h3>
                 <p style="font-size: 0.9rem;">Current Mode: <strong>{{ 'Flexible (Multiple Submissions)' if
                         allow_repref
                         else 'Strict (One-time Only)' }}</strong></p>
@@ -425,8 +445,8 @@
                         {{ 'Disable Repreference' if allow_repref else 'Enable Repreference' }}
                     </button>
                 </form>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    If disabled, students can only set preferences once and cannot edit them.
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+                    If disabled, students can only set preferences once and cannot edit them, regardless of the time window.
                 </p>
             </div>
 
