@@ -93,7 +93,7 @@
             color: var(--primary);
         }
 
-        .nav-link-active {
+        .nav-link.active {
             color: var(--primary);
             font-weight: 600;
         }
@@ -577,6 +577,7 @@
             line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -867,39 +868,94 @@
             .allocation-banner {
                 padding: 1.5rem;
             }
-        }
 
-        @media (max-width: 640px) {
-            .brand-title {
-                font-size: 1rem;
-            }
-
-            .nav-right {
-                gap: 0.75rem;
+            .page-title {
+                font-size: 1.25rem;
             }
 
             .nav-link span {
                 display: none;
+            }
+
+            .nav-divider {
+                display: none;
+            }
+
+            .brand-title {
+                font-size: 1.1rem;
+            }
+
+            .brand-subtitle {
+                font-size: 0.6rem;
+            }
+
+            .nav-right {
+                gap: 0.5rem;
+            }
+
+            .nav-link {
+                font-size: 0.8rem;
+            }
+
+            .logout-link {
+                font-size: 0.8rem;
             }
         }
 
         @media (max-width: 480px) {
             .main-content {
                 padding: 0 0.75rem;
-                margin-top: 4rem;
+                margin-top: 3.75rem;
             }
 
             .panel {
                 padding: 1.25rem;
+                border-radius: 8px;
             }
 
-            .setting-card {
-                padding: 1.25rem;
+            .s-card {
+                padding: 1rem;
+                border-radius: 8px;
             }
 
             .notice-form,
             .notice-feed {
-                padding: 1.25rem;
+                padding: 1rem;
+            }
+
+            .allocation-banner {
+                padding: 1rem;
+            }
+
+            .btn-launch {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .portal-navbar {
+                padding: 0.5rem 0;
+            }
+
+            .brand-title {
+                font-size: 0.95rem;
+            }
+
+            .brand-icon svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            .brand-logo {
+                gap: 0.5rem;
+            }
+
+            .page-title {
+                font-size: 1.1rem;
+            }
+
+            .page-subtitle {
+                font-size: 0.8rem;
+                margin-bottom: 1.25rem;
             }
         }
     </style>
@@ -909,7 +965,7 @@
     <!-- Navbar (matching student portal) -->
     <nav class="portal-navbar">
         <div class="navbar-content">
-            <a href="#" class="brand-logo">
+            <a href="{{ url_for('dashboard') }}" class="brand-logo">
                 <div class="brand-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
