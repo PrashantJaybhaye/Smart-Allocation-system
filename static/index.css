@@ -1,14 +1,36 @@
+/* =============================================
+   GLOBAL RESET & VARIABLES
+   ============================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
   --bg: #f8fafc;
   --card-bg: #ffffff;
-  --text-main: #1e293b;
+  --text-main: #0f172a;
+  --text-body: #334155;
   --text-muted: #64748b;
+  --text-faint: #94a3b8;
   --success: #22c55e;
   --error: #ef4444;
   --warning: #f59e0b;
   --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -16,159 +38,42 @@ body {
     "Inter",
     system-ui,
     -apple-system,
+    "Segoe UI",
     sans-serif;
-  background-color: var(--bg);
-  color: var(--text-main);
-  margin: 0;
+  background: var(--bg);
+  color: var(--text-body);
   line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
 }
 
+/* =============================================
+   UTILITIES
+   ============================================= */
 .container {
   max-width: 1000px;
-  margin: 2rem auto;
+  margin: 0 auto;
   padding: 0 1rem;
 }
 
-/* Typography */
-h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.025em;
+.text-center {
+  text-align: center;
 }
 
-h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: #334155;
-}
-
-.subtitle {
-  color: var(--text-muted);
-  font-size: 1rem;
-}
-
-/* Cards */
-.card {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--border);
-  margin-bottom: 2rem;
-}
-
-/* Forms */
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: var(--text-main);
-  font-size: 0.9rem;
-}
-
-.form-hint {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-}
-
-.form-control {
+.w-full {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
-  color: var(--text-main);
-  transition: all 0.2s;
-  background-color: #ffffff;
-  box-sizing: border-box;
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-}
-
-.form-control:disabled,
-.form-control[readonly] {
-  background-color: #f1f5f9;
-  color: #64748b;
-  cursor: not-allowed;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.95rem;
-  line-height: 1;
-}
-
-.btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-}
-
-.btn-secondary {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.btn-secondary:hover {
-  background: #e2e8f0;
-  color: #1e293b;
-  box-shadow: none;
-}
-
-.btn-danger {
-  background-color: var(--error);
-}
-
-.btn-danger:hover {
-  background-color: #dc2626;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
-}
-
-.btn-sm {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-}
-
-/* Alerts */
+/* =============================================
+   ALERTS (shared across pages)
+   ============================================= */
 .alert {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
   font-weight: 500;
-  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .alert-error {
@@ -183,38 +88,165 @@ h3 {
   border: 1px solid #bbf7d0;
 }
 
-/* Tables */
+.alert-info {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* =============================================
+   CARDS (shared)
+   ============================================= */
+.card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+/* =============================================
+   FORM CONTROLS (shared)
+   ============================================= */
+.form-control {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background: #f8fafc;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.form-control:focus {
+  outline: none;
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* =============================================
+   BUTTONS (shared across pages)
+   ============================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  text-decoration: none;
+  line-height: 1;
+  background: #0f172a;
+  color: white;
+}
+
+.btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-icon-only {
+  padding: 0.5rem;
+}
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: middle;
+  fill: currentColor;
+}
+
+.btn .icon {
+  margin-right: 0.5rem;
+}
+
+.btn-danger {
+  background: var(--error);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  opacity: 1;
+}
+
+/* =============================================
+   TABLES (shared)
+   ============================================= */
 table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin-top: 0.5rem;
 }
 
 th {
-  background: #f8fafc;
+  background: var(--bg);
   text-align: left;
-  padding: 1rem;
+  padding: 0.65rem 0.75rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   border-bottom: 1px solid var(--border);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border);
-  color: #334155;
-  font-size: 0.95rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-body);
+  font-size: 0.88rem;
 }
 
 tr:last-child td {
   border-bottom: none;
 }
 
-/* Utilities */
+/* =============================================
+   STAT CARDS (legacy)
+   ============================================= */
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* =============================================
+   GRID (shared)
+   ============================================= */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr;
@@ -227,36 +259,6 @@ tr:last-child td {
   }
 }
 
-.w-full {
-  width: 100%;
-}
-.mb-4 {
-  margin-bottom: 1rem;
-}
-.text-center {
-  text-align: center;
-}
-
-/* Icons */
-.icon {
-  width: 1.25em;
-  height: 1.25em;
-  vertical-align: middle;
-  fill: currentColor;
-}
-
-.btn .icon {
-  margin-right: 0.5rem;
-}
-
-.btn-icon-only {
-  padding: 0.5rem;
-}
-.btn-icon-only .icon {
-  margin-right: 0;
-}
-
-/* Dashboard Specifics */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -264,56 +266,34 @@ tr:last-child td {
   margin-bottom: 2rem;
 }
 
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.stat-value {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-}
-
-/* Upload Area */
+/* =============================================
+   UPLOAD AREA (legacy)
+   ============================================= */
 .upload-area {
   border: 2px dashed var(--border);
-  border-radius: 0.75rem;
-  padding: 3rem;
+  border-radius: var(--radius);
+  padding: 2rem;
   text-align: center;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   cursor: pointer;
   background: #fbfcfe;
 }
 
 .upload-area:hover {
   border-color: var(--primary);
-  background: #eff6ff;
+  background: var(--primary-light);
 }
 
-.file-input {
-  display: none;
+.subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
 }
 
-/* Loading State */
-/* Loading State */
+/* =============================================
+   LOADING STATE
+   ============================================= */
 .loading {
-  opacity: 0.75;
+  opacity: 0.7;
   cursor: not-allowed;
   pointer-events: none;
 }
