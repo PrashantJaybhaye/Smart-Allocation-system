@@ -19,6 +19,10 @@ from flask_wtf.csrf import CSRFProtect
 import logging
 from dotenv import load_dotenv
 import re
+import uuid
+
+# Memory cache for staging imports (In production, use Redis or DB tables)
+import_staging_cache = {}
 
 # Automatically load .env file if it exists, but don't fail if it doesn't
 load_dotenv()
@@ -428,12 +432,35 @@ def submit_preferences():
     if not student:
         student = Student(student_id=current_user.username, name=current_user.username)
         db.session.add(student)
+        
+    # Profile completeness check
+    if not student.department or not student.mobile_no:
+        flash('Please complete your profile (Department and Mobile Number) from the Profile section before submitting preferences.', 'error')
+        return redirect(url_for('dashboard'))
     
     student.preferences = prefs
     student.submission_time = datetime.now() 
     db.session.commit()
     flash('Preferences submitted successfully!', 'success')
     return redirect(url_for('dashboard'))
+
+@app.route('/api/course_seats', methods=['GET'])
+@login_required
+def get_course_seats():
+    # Return how many seats are available per course
+    courses = Course.query.all()
+    # Let's see how many students have been currently assigned a course (if we want live dynamic data)
+    # The requirement seems to just be "see course capacities". We will show total capacities.
+    # If the admin ran the algorithm, we can subtract the student count allocated.
+    seat_data = {}
+    for c in courses:
+        allocated = Student.query.filter_by(allocated_course_id=c.id).count()
+        remaining = max(0, c.capacity - allocated)
+        seat_data[c.name] = {
+            'total': c.capacity,
+            'remaining': remaining
+        }
+    return jsonify(seat_data)
 
 @app.route('/admin/students')
 @login_required
@@ -442,7 +469,8 @@ def admin_students_list():
         return "Unauthorized", 403
     
     students = Student.query.all()
-    return render_template('admin_students.html', students=students)
+    courses = Course.query.all()
+    return render_template('admin_students.html', students=students, courses=courses)
 
 @app.route('/admin/student/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -520,6 +548,40 @@ def delete_student(id):
         
     return redirect(url_for('admin_students_list'))
 
+@app.route('/admin/student/<int:id>/override', methods=['POST'])
+@login_required
+def admin_override_allocation(id):
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    student = Student.query.get_or_404(id)
+    new_course_name = request.form.get('new_course')
+    
+    try:
+        if not new_course_name:
+            # Unassign
+            student.allocated_course_id = None
+            student.allocation_status = 'Unassigned'
+            flash(f'Allocation removed for {student.name}.', 'success')
+        else:
+            # Assign
+            course = Course.query.filter_by(name=new_course_name).first()
+            if not course:
+                flash("Selected course does not exist.", "error")
+                return redirect(url_for('admin_students_list'))
+                
+            student.allocated_course_id = course.id
+            student.allocation_status = 'Allocated'
+            flash(f'Successfully assigned {student.name} to {course.name}.', 'success')
+            
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        app.logger.exception("Error during manual override")
+        flash("An error occurred trying to override allocation.", "error")
+        
+    return redirect(url_for('admin_students_list'))
+
 @app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_course(id):
@@ -570,6 +632,24 @@ def delete_course(id):
         
     return redirect(url_for('dashboard'))
 
+@app.route('/admin/wipe_data', methods=['POST'])
+@login_required
+def wipe_data():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    try:
+        # Delete all students (this cascades or we just delete them)
+        Student.query.delete()
+        db.session.commit()
+        flash('All student data, preferences, and allocations have been securely wiped.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.exception("Error wiping database")
+        flash('Failed to wipe student data.', 'error')
+        
+    return redirect(url_for('dashboard'))
+
 @app.route('/admin/upload_students', methods=['POST'])
 @login_required
 def upload_students():
@@ -583,25 +663,113 @@ def upload_students():
         file.save(path)
         
         try:
-            df, _ = DataProcessor.process_file(path)
-            for _, row in df.iterrows():
-                # Check if student already exists
-                student = Student.query.filter_by(student_id=str(row['Student ID'])).first()
-                if not student:
-                    student = Student(student_id=str(row['Student ID']), name=row['Name'])
-                    db.session.add(student)
-                
-                student.name = row['Name']
-                # Collect all preference columns
-                prefs = [row[f'Preference {i}'] for i in range(1, 9) if f'Preference {i}' in row and pd.notna(row[f'Preference {i}'])]
-                student.preferences = prefs
-                
-            db.session.commit()
-            flash('Students imported successfully!', 'success')
-        except Exception:
-            logging.exception("Error during student upload")
-            flash('Unable to complete the student import. Please check the file format.', 'error')
+            df, original_cols = DataProcessor.process_file(path)
             
+            # Prepare data for preview
+            preview_data = []
+            error_count = 0
+            valid_count = 0
+            
+            # Track normalized internal records to save if confirmed
+            internal_records = []
+            
+            for _, row in df.iterrows():
+                row_info = {'fields': [], 'has_error': False}
+                
+                # Check required fields
+                student_id = str(row.get('Student ID', '')).strip()
+                name = str(row.get('Name', '')).strip()
+                pref1 = str(row.get('Preference 1', '')).strip()
+                
+                has_critical_error = not student_id or student_id == 'nan' or not name or name == 'nan' or not pref1 or pref1 == 'nan'
+                
+                if has_critical_error:
+                    row_info['has_error'] = True
+                    error_count += 1
+                else:
+                    valid_count += 1
+                
+                # Build display fields mapping back to original columns
+                # For simplicity, we just dump what the dataframe parsed
+                for col in df.columns:
+                    val = str(row.get(col, '')).strip()
+                    if val == 'nan': val = ''
+                    
+                    is_required = col in ['Student ID', 'Name', 'Preference 1']
+                    is_empty = not val
+                    
+                    row_info['fields'].append({
+                        'column': col,
+                        'value': val,
+                        'is_empty': is_empty,
+                        'is_required': is_required
+                    })
+                
+                preview_data.append(row_info)
+                
+                # If no error, prepare internal record
+                if not has_critical_error:
+                    prefs = [str(row[f'Preference {i}']).strip() for i in range(1, 9) 
+                             if f'Preference {i}' in row and pd.notna(row[f'Preference {i}']) and str(row[f'Preference {i}']).strip() != 'nan']
+                    
+                    internal_records.append({
+                        'student_id': student_id,
+                        'name': name,
+                        'preferences': prefs
+                    })
+            
+            # Cache the valid records with a short-lived key
+            cache_key = str(uuid.uuid4())
+            import_staging_cache[cache_key] = internal_records
+            
+            return render_template(
+                'admin_upload_preview.html',
+                headers=df.columns.tolist(),
+                preview_data=preview_data,
+                error_count=error_count,
+                valid_count=valid_count,
+                cache_key=cache_key
+            )
+            
+        except Exception as e:
+            logging.exception("Error during student upload")
+            flash(f'Unable to parse file. Please ensure it follows the correct template. Error: {str(e)}', 'error')
+            
+    return redirect(url_for('dashboard'))
+
+@app.route('/admin/confirm_import', methods=['POST'])
+@login_required
+def confirm_import():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+        
+    cache_key = request.form.get('cache_key')
+    records = import_staging_cache.get(cache_key)
+    
+    if not records:
+        flash('Import session expired or invalid. Please upload the file again.', 'error')
+        return redirect(url_for('dashboard'))
+        
+    try:
+        for rec in records:
+            student = Student.query.filter_by(student_id=rec['student_id']).first()
+            if not student:
+                student = Student(student_id=rec['student_id'], name=rec['name'])
+                db.session.add(student)
+            
+            student.name = rec['name']
+            student.preferences = rec['preferences']
+            
+        db.session.commit()
+        # Clean up cache
+        del import_staging_cache[cache_key]
+        
+        flash(f'Successfully imported {len(records)} students!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logging.exception("Error saving confirmed imports")
+        flash('Database error occurred while saving students.', 'error')
+        
     return redirect(url_for('dashboard'))
 
 @app.route('/admin/setup_courses', methods=['POST'])

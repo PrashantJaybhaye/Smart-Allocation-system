@@ -85,6 +85,20 @@ class AllocationEngine:
                 faculty_dist[faculty] = {'total_seats': 0, 'allocated_seats': 0}
             faculty_dist[faculty]['total_seats'] += c.capacity
             faculty_dist[faculty]['allocated_seats'] += self.course_usage.get(c.name, 0)
+            
+        # Satisfaction breakdown by department
+        dept_stats = {}
+        for s in self.students:
+            dept = s.department or "Unknown / Unspecified"
+            if dept not in dept_stats:
+                dept_stats[dept] = {'total': 0, 'assigned': 0}
+            dept_stats[dept]['total'] += 1
+            if getattr(s, 'allocation_status', 'Unallocated') == 'Allocated':
+                dept_stats[dept]['assigned'] += 1
+                
+        for dept in dept_stats:
+            d = dept_stats[dept]
+            d['satisfaction_rate'] = (d['assigned'] / d['total'] * 100) if d['total'] > 0 else 0
 
         return {
             "total_students": total,
@@ -95,6 +109,7 @@ class AllocationEngine:
             "satisfaction_rate": (assigned / total * 100) if total > 0 else 0,
             "course_demand": course_demand,
             "faculty_distribution": faculty_dist,
+            "department_satisfaction": dept_stats,
             "occupancy": {
                 name: {
                     'percentage': (usage / self.courses[name].capacity * 100) if self.courses[name].capacity > 0 else 0,

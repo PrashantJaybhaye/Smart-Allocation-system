@@ -1283,6 +1283,32 @@
                 </div>
             </div>
 
+            <!-- Wipe Students -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <div class="s-card-icon amber">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <span class="s-card-title">Wipe Student Data</span>
+                </div>
+                <div class="s-card-body">
+                    <p class="s-card-desc">Remove all students, their preferences, and allocations. Leaves courses and
+                        notices intact.</p>
+                </div>
+                <div class="s-card-footer">
+                    <form action="{{ url_for('wipe_data') }}" method="POST"
+                        onsubmit="return confirm('Are you sure? This will permanently delete all student records.')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="s-btn s-btn-outline"
+                            style="border-color: #f59e0b; color: #d97706;">Wipe Students</button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Danger Zone -->
             <div class="s-card">
                 <div class="s-card-header">
@@ -1317,7 +1343,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             flatpickr(".flatpickr-time", {
                 enableTime: true,
                 dateFormat: "Y-m-dTH:i", // Keep ISO-ish format for backend compatibility

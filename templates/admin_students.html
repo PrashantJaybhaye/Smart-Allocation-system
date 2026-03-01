@@ -664,7 +664,16 @@
                                 <span class="status-chip pending"><span class="dot"></span>Pending</span>
                                 {% endif %}
                             </td>
-                            <td style="text-align: right;">
+                            <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <button type="button" class="action-btn override-btn" title="Manual Override"
+                                    data-target-id="{{ student.id }}" data-target-name="{{ student.name }}"
+                                    data-target-course="{{ student.allocated_course.name if student.allocated_course else '' }}">
+                                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                </button>
                                 <a href="{{ url_for('edit_student', id=student.id) }}" class="action-btn" title="Edit">
                                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                         stroke-width="2">
@@ -673,7 +682,7 @@
                                     </svg>
                                 </a>
                                 <form action="{{ url_for('delete_student', id=student.id) }}" method="POST"
-                                    style="display: inline;"
+                                    style="margin: 0;"
                                     onsubmit="return confirm('Delete this student? This cannot be undone.');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="action-btn delete" title="Delete">
@@ -709,6 +718,65 @@
         </div>
     </div>
 
+    <!-- Allocation Override Modal -->
+    <div id="overrideModal"
+        style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+        <div
+            style="background: white; width: 100%; max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            <div
+                style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #0f172a;">Manual Allocation Override
+                </h3>
+                <button type="button" onclick="closeOverrideModal()"
+                    style="background: none; border: none; font-size: 1.5rem; line-height: 1; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+
+            <form id="overrideForm" action="" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div style="padding: 1.5rem;">
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #475569;">
+                        Manually assign <strong id="overrideStudentName" style="color: #0f172a;"></strong> to a specific
+                        course.
+                    </p>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label
+                            style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Current
+                            Allocation</label>
+                        <div id="overrideCurrentStatus"
+                            style="font-size: 0.95rem; font-weight: 500; color: #334155; background: #f8fafc; padding: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            None</div>
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">New
+                            Course Allocation</label>
+                        <select name="new_course"
+                            style="width: 100%; padding: 0.65rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; color: #334155;"
+                            required>
+                            <option value="">-- Unassign (Remove current) --</option>
+                            <!-- In a full implementation, we'd pass courses here -->
+                            {% for course in courses %}
+                            <option value="{{ course.name }}">{{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div
+                    style="padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" onclick="closeOverrideModal()" class="btn-back"
+                        style="margin: 0;">Cancel</button>
+                    <button type="submit"
+                        style="background: var(--primary); color: white; border: none; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; font-size: 0.9rem; cursor: pointer;">Save
+                        Override</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         document.getElementById('searchInput').addEventListener('keyup', function () {
             const filter = this.value.toLowerCase();
@@ -725,6 +793,30 @@
             });
             document.getElementById('countBadge').textContent = `${visibleCount} students`;
         });
+
+        document.querySelectorAll('.override-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const studentId = this.getAttribute('data-target-id');
+                const studentName = this.getAttribute('data-target-name');
+                const currentCourse = this.getAttribute('data-target-course');
+                openOverrideModal(studentId, studentName, currentCourse);
+            });
+        });
+
+        function openOverrideModal(studentId, studentName, currentCourse) {
+            document.getElementById('overrideStudentName').textContent = studentName;
+            document.getElementById('overrideCurrentStatus').textContent = currentCourse || 'Unassigned';
+
+            // Set the form action dynamically
+            const form = document.getElementById('overrideForm');
+            form.action = `/admin/student/${studentId}/override`;
+
+            document.getElementById('overrideModal').style.display = 'flex';
+        }
+
+        function closeOverrideModal() {
+            document.getElementById('overrideModal').style.display = 'none';
+        }
     </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

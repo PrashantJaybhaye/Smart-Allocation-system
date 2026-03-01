@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Upload - Smart Allocation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Navbar matching */
+        .portal-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid #f1f5f9;
+            padding: 0.75rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: #0f172a;
+        }
+
+        .brand-icon {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-text-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .brand-subtitle {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.15rem;
+        }
+
+        .page-wrap {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 5.5rem 1rem 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .summary-banner {
+            display: flex;
+            gap: 2rem;
+            padding: 1.25rem 1.5rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .stat-val.error {
+            color: #ef4444;
+        }
+
+        .data-table-wrapper {
+            max-height: 500px;
+            overflow: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f8fafc;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            color: #334155;
+            white-space: nowrap;
+        }
+
+        .data-table tr.has-error {
+            background: #fef2f2;
+        }
+
+        .cell-error {
+            color: #ef4444;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .action-bar {
+            padding: 1rem 1.5rem;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-cancel {
+            background: white;
+            color: #475569;
+            border: 1.5px solid #e2e8f0;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+        .btn-confirm {
+            background: var(--primary);
+            color: white;
+            border: 1.5px solid var(--primary);
+        }
+
+        .btn-confirm:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-confirm:disabled {
+            background: #94a3b8;
+            border-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .error-alert {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="portal-navbar">
+        <div class="navbar-content">
+            <a href="{{ url_for('dashboard') }}" class="brand-logo">
+                <div class="brand-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <div class="brand-text-col">
+                    <div class="brand-title">Smart<span style="font-weight: 400; color: #64748b;">Allocation</span>
+                    </div>
+                    <div class="brand-subtitle">Admin Console</div>
+                </div>
+            </a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <h1 class="page-title">Review Data Import</h1>
+            <p class="page-subtitle">Verify the student records before saving them to the database.</p>
+        </div>
+
+        {% if error_count > 0 %}
+        <div class="error-alert">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                style="flex-shrink: 0; margin-top: 0.1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+                <strong>Cannot import file!</strong> Found {{ error_count }} rows with missing or invalid data.
+                Please fix these empty or incorrect fields in your Excel/CSV file and try uploading again.
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="content-card">
+            <div class="summary-banner">
+                <div class="stat-box">
+                    <span class="stat-label">Total Valid Rows</span>
+                    <span class="stat-val">{{ valid_count }}</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Columns Parsed</span>
+                    <span class="stat-val">{{ headers|length }}</span>
+                </div>
+                {% if error_count > 0 %}
+                <div class="stat-box">
+                    <span class="stat-label">Errors Detected</span>
+                    <span class="stat-val error">{{ error_count }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            {% for h in headers %}
+                            <th>{{ h }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row_info in preview_data %}
+                        <tr class="{% if row_info.has_error %}has-error{% endif %}">
+                            <td>
+                                {% if row_info.has_error %}
+                                <span class="cell-error">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                        stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Error
+                                </span>
+                                {% else %}
+                                <span
+                                    style="color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                        stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Valid
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            {% for field in row_info.fields %}
+                            <td>
+                                {% if field.is_empty and field.is_required %}
+                                <span class="cell-error" title="This field is required">
+                                    [Missing]
+                                </span>
+                                {% else %}
+                                {{ field.value if field.value else '-' }}
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="action-bar">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-cancel">Cancel Import</a>
+
+                <form action="{{ url_for('confirm_import') }}" method="POST" style="margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="cache_key" value="{{ cache_key }}">
+                    <!-- Disable button if there are errors -->
+                    <button type="submit" class="btn btn-confirm" {% if error_count> 0 %}disabled{% endif %}>
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Confirm & Save to Database
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
