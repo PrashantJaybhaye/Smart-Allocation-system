@@ -57,7 +57,7 @@ class AllocationEngine:
                 'Name': student.name,
                 'Allocated Course': allocated_course_name,
                 'Status': student.allocation_status,
-                'Submission Time': student.submission_time.strftime('%Y-%m-%d %H:%M:%S') if student.submission_time else 'N/A'
+                'Submission Time': student.submission_time.strftime('%Y-%m-%d %I:%M:%S %p') if student.submission_time else 'N/A'
             })
             
         return self.allocations

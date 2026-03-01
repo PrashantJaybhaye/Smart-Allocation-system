@@ -840,7 +840,7 @@ def export_course_data(course_id):
             'Roll No': s.roll_no,
             'Mobile': s.mobile_no,
             'Email': s.email,
-            'Submission Time': s.submission_time.strftime('%Y-%m-%d %H:%M:%S') if s.submission_time else 'N/A'
+            'Submission Time': s.submission_time.strftime('%Y-%m-%d %I:%M:%S %p') if s.submission_time else 'N/A'
         })
     
     df = pd.DataFrame(data)

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Smart Allocation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         * {
             box-sizing: border-box;
@@ -1184,7 +1185,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                {{ notice.created_at.strftime('%b %d, %H:%M') }}
+                                {{ notice.created_at.strftime('%b %d, %I:%M %p') }}
                             </span>
                         </div>
                     </div>
@@ -1234,13 +1235,13 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="field">
                             <label for="start_time" class="field-label">Start</label>
-                            <input type="datetime-local" id="start_time" name="start_time" class="field-input"
-                                value="{{ allocation_start }}">
+                            <input type="text" id="start_time" name="start_time" class="field-input flatpickr-time"
+                                value="{{ allocation_start }}" placeholder="Select start time...">
                         </div>
                         <div class="field">
                             <label for="end_time" class="field-label">End</label>
-                            <input type="datetime-local" id="end_time" name="end_time" class="field-input"
-                                value="{{ allocation_end }}">
+                            <input type="text" id="end_time" name="end_time" class="field-input flatpickr-time"
+                                value="{{ allocation_end }}" placeholder="Select end time...">
                         </div>
                         <div class="s-card-footer">
                             <button type="submit" class="s-btn s-btn-outline">Save Schedule</button>
@@ -1314,6 +1315,19 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr(".flatpickr-time", {
+                enableTime: true,
+                dateFormat: "Y-m-dTH:i", // Keep ISO-ish format for backend compatibility
+                altInput: true,
+                altFormat: "F j, Y, h:i K", // 12-hour format with AM/PM for user display
+                time_24hr: false,
+                allowInput: true
+            });
+        });
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
