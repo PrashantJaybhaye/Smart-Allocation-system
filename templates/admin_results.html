@@ -663,49 +663,7 @@
                 </div>
             </div>
 
-            <!-- Department Satisfaction -->
-            <div class="a-card">
-                <div class="a-card-header">Satisfaction by Department</div>
-                <div class="a-card-body" style="padding: 0;">
-                    <div style="max-height: 340px; overflow-y: auto; overflow-x: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Department</th>
-                                    <th style="text-align: right;">Total Students</th>
-                                    <th style="text-align: right;">Satisfaction</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if analytics and analytics.department_satisfaction %}
-                                {% for dept, stats in analytics.department_satisfaction.items() %}
-                                <tr>
-                                    <td style="font-weight: 500;">{{ dept }}</td>
-                                    <td style="text-align: right;">{{ stats.total }}</td>
-                                    <td style="text-align: right;">
-                                        {% if stats.satisfaction_rate >= 80 %}
-                                        <span style="font-weight: 600; color: #16a34a;">
-                                            {% elif stats.satisfaction_rate >= 50 %}
-                                            <span style="font-weight: 600; color: #d97706;">
-                                                {% else %}
-                                                <span style="font-weight: 600; color: #dc2626;">
-                                                    {% endif %}
-                                                    {{ "%.1f"|format(stats.satisfaction_rate) }}%
-                                                </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                                {% else %}
-                                <tr>
-                                    <td colspan="3" style="text-align: center; color: #cbd5e1; padding: 1.5rem;">No data
-                                        available</td>
-                                </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Allocation Log -->
             <div class="a-card full">

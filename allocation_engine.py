@@ -52,12 +52,31 @@ class AllocationEngine:
                 student.allocation_status = 'Unassigned'
                 student.allocated_course_id = None
             
+            pref_rank = 'N/A'
+            if allocated_course_name != "Unassigned" and prefs:
+                try:
+                    pref_rank = prefs.index(allocated_course_name) + 1
+                except ValueError:
+                    pref_rank = 'Manual'
+
+            # Build preference columns
+            pref_data = {}
+            for i in range(1, 9):
+                pref_data[f'Preference {i}'] = prefs[i-1] if i <= len(prefs) else ''
+
             self.allocations.append({
                 'Student ID': student.student_id,
                 'Name': student.name,
+                'Department': student.department or '',
+                'Class': student.student_class or '',
+                'Roll No': student.roll_no or '',
+                'Mobile': student.mobile_no or '',
+                'Email': student.email or '',
                 'Allocated Course': allocated_course_name,
+                'Preference Got': pref_rank,
                 'Status': student.allocation_status,
-                'Submission Time': student.submission_time.strftime('%Y-%m-%d %I:%M:%S %p') if student.submission_time else 'N/A'
+                'Submission Time': student.submission_time.strftime('%d %b %Y, %I:%M %p') if student.submission_time else 'N/A',
+                **pref_data
             })
             
         return self.allocations
@@ -86,20 +105,6 @@ class AllocationEngine:
             faculty_dist[faculty]['total_seats'] += c.capacity
             faculty_dist[faculty]['allocated_seats'] += self.course_usage.get(c.name, 0)
             
-        # Satisfaction breakdown by department
-        dept_stats = {}
-        for s in self.students:
-            dept = s.department or "Unknown / Unspecified"
-            if dept not in dept_stats:
-                dept_stats[dept] = {'total': 0, 'assigned': 0}
-            dept_stats[dept]['total'] += 1
-            if getattr(s, 'allocation_status', 'Unallocated') == 'Allocated':
-                dept_stats[dept]['assigned'] += 1
-                
-        for dept in dept_stats:
-            d = dept_stats[dept]
-            d['satisfaction_rate'] = (d['assigned'] / d['total'] * 100) if d['total'] > 0 else 0
-
         return {
             "total_students": total,
             "assigned_count": assigned,
@@ -109,7 +114,6 @@ class AllocationEngine:
             "satisfaction_rate": (assigned / total * 100) if total > 0 else 0,
             "course_demand": course_demand,
             "faculty_distribution": faculty_dist,
-            "department_satisfaction": dept_stats,
             "occupancy": {
                 name: {
                     'percentage': (usage / self.courses[name].capacity * 100) if self.courses[name].capacity > 0 else 0,

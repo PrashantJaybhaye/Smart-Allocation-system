@@ -6,6 +6,7 @@ from flask_limiter.util import get_remote_address
 import string
 from werkzeug.utils import secure_filename
 import os
+import click
 import urllib.request
 import json
 from io import BytesIO, StringIO
@@ -953,6 +954,40 @@ def reset_data():
         
     return redirect(url_for('dashboard'))
 
+@app.route('/admin/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not all([current_password, new_password, confirm_password]):
+            flash('All fields are required.', 'error')
+            return redirect(url_for('change_password'))
+        
+        if not current_user.verify_password(current_password):
+            flash('Current password is incorrect.', 'error')
+            return redirect(url_for('change_password'))
+        
+        if new_password != confirm_password:
+            flash('New passwords do not match.', 'error')
+            return redirect(url_for('change_password'))
+        
+        if len(new_password) < 6:
+            flash('Password must be at least 6 characters long.', 'error')
+            return redirect(url_for('change_password'))
+        
+        current_user.password = new_password
+        db.session.commit()
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('change_password.html')
+
 @app.cli.command("init-db")
 def init_db_command():
     """Clear existing data and create new tables."""
@@ -978,6 +1013,18 @@ def init_db_command():
     
     print("Database initialized successfully.")
 
+@app.cli.command("change-admin-password")
+@click.argument('new_password')
+def change_admin_password(new_password):
+    """Change the admin user's password. Usage: flask change-admin-password <NewPassword>"""
+    admin = User.query.filter_by(username='admin', role='admin').first()
+    if not admin:
+        print("Error: Admin user not found. Run 'flask init-db' first.")
+        return
+    admin.password = new_password
+    db.session.commit()
+    print("Admin password changed successfully!")
+
 @app.route('/admin/export_course/<int:course_id>')
 @login_required
 def export_course_data(course_id):
@@ -997,18 +1044,37 @@ def export_course_data(course_id):
         flash(f'No students allocated to {course.name}.', 'warning')
         return redirect(url_for('admin_results'))
 
-    # Create CSV data
+    # Create comprehensive CSV data
     data = []
     for s in students:
+        # Determine what preference number this course was
+        pref_rank = 'N/A'
+        if s.preferences:
+            try:
+                pref_rank = s.preferences.index(course.name) + 1
+            except ValueError:
+                pref_rank = 'Manual Override'
+        
+        # Build preference columns
+        pref_data = {}
+        prefs = s.preferences or []
+        for i in range(1, 9):
+            pref_data[f'Preference {i}'] = prefs[i-1] if i <= len(prefs) else ''
+        
         data.append({
+            'Sr. No': len(data) + 1,
             'Student ID': s.student_id,
             'Name': s.name,
-            'Department': s.department,
-            'Class': s.student_class,
-            'Roll No': s.roll_no,
-            'Mobile': s.mobile_no,
-            'Email': s.email,
-            'Submission Time': s.submission_time.strftime('%Y-%m-%d %I:%M:%S %p') if s.submission_time else 'N/A'
+            'Department': s.department or '',
+            'Class': s.student_class or '',
+            'Roll No': s.roll_no or '',
+            'Mobile': s.mobile_no or '',
+            'Email': s.email or '',
+            'Allocated Course': course.name,
+            'Preference Got': pref_rank,
+            'Allocation Status': s.allocation_status,
+            'Submission Time': s.submission_time.strftime('%d %b %Y, %I:%M %p') if s.submission_time else 'N/A',
+            **pref_data
         })
     
     df = pd.DataFrame(data)
@@ -1022,7 +1088,7 @@ def export_course_data(course_id):
         BytesIO(output.getvalue().encode()),
         mimetype='text/csv',
         as_attachment=True,
-        download_name=f'{course.name.replace(" ", "_")}_Allocations.csv'
+        download_name=f'{course.name.replace(" ", "_")}_({len(students)}_Students)_Allocations.csv'
     )
 
 if __name__ == "__main__":
