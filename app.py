@@ -15,7 +15,8 @@ from models import db, User, Student, Course, SystemConfig, Notice
 from data_processor import DataProcessor
 from allocation_engine import AllocationEngine
 from report_generator import ReportGenerator
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+IST = timezone(timedelta(hours=5, minutes=30))
 from flask_wtf.csrf import CSRFProtect
 import logging
 from dotenv import load_dotenv
@@ -356,7 +357,7 @@ def dashboard():
         recommendations = student_record.get_recommendations() if student_record else []
         
         # Check time window
-        now = datetime.now()
+        now = datetime.now(IST).replace(tzinfo=None)
         out_of_window = False
         window_message = None
         window_state = 'open' # Default
@@ -419,7 +420,7 @@ def submit_preferences():
     # Time window validation
     allocation_start = get_config('allocation_start', '')
     allocation_end = get_config('allocation_end', '')
-    now = datetime.now()
+    now = datetime.now(IST).replace(tzinfo=None)
     try:
         if allocation_start and now < datetime.fromisoformat(allocation_start):
             flash('Preference selection has not started yet.', 'error')
@@ -453,28 +454,12 @@ def submit_preferences():
         return redirect(url_for('dashboard'))
     
     student.preferences = prefs
-    student.submission_time = datetime.now() 
+    student.submission_time = datetime.now(IST).replace(tzinfo=None) 
     db.session.commit()
     flash('Preferences submitted successfully!', 'success')
     return redirect(url_for('dashboard'))
 
-@app.route('/api/course_seats', methods=['GET'])
-@login_required
-def get_course_seats():
-    # Return how many seats are available per course
-    courses = Course.query.all()
-    # Let's see how many students have been currently assigned a course (if we want live dynamic data)
-    # The requirement seems to just be "see course capacities". We will show total capacities.
-    # If the admin ran the algorithm, we can subtract the student count allocated.
-    seat_data = {}
-    for c in courses:
-        allocated = Student.query.filter_by(allocated_course_id=c.id).count()
-        remaining = max(0, c.capacity - allocated)
-        seat_data[c.name] = {
-            'total': c.capacity,
-            'remaining': remaining
-        }
-    return jsonify(seat_data)
+
 
 @app.route('/admin/students')
 @login_required
@@ -1114,11 +1099,11 @@ if __name__ == "__main__":
             server.watch('templates/*.html')
             server.watch('static/*.css')
             server.watch('static/*.js')
-            print("🚀 Starting development server with LiveReload on http://127.0.0.1:5000")
+            print("[*] Starting development server with LiveReload on http://127.0.0.1:5000")
             server.serve(port=5000, debug=True)
         except ImportError:
-            print("⚠️ LiveReload not installed. Falling back to standard Flask runner.")
-            print("💡 Tip: Run 'pip install livereload' for auto-browser refreshing.")
+            print("[!] LiveReload not installed. Falling back to standard Flask runner.")
+            print("[i] Tip: Run 'pip install livereload' for auto-browser refreshing.")
             app.run(debug=True)
     else:
         # Production mode

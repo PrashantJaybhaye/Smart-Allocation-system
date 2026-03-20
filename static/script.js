@@ -71,11 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 submitBtn.style.pointerEvents = 'none';
                 submitBtn.style.opacity = '0.7';
 
-                // Use setTimeout to allow form to submit before disabling, 
-                // as disabling a button immediately can sometimes prevent form submission in some browsers.
-                setTimeout(() => {
-                    submitBtn.disabled = true;
-                }, 10);
+
             }
         });
     });

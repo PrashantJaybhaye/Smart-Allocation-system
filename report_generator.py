@@ -6,7 +6,8 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+IST = timezone(timedelta(hours=5, minutes=30))
 import os
 
 class ReportGenerator:
@@ -103,7 +104,7 @@ class ReportGenerator:
                     len(df[df['Preference Got'] == 2]),
                     len(df[df['Preference Got'] == 3]),
                     len(df[df['Preference Got'].apply(lambda x: isinstance(x, int) and x >= 4)]),
-                    datetime.now().strftime('%d %b %Y, %I:%M %p')
+                    datetime.now(IST).strftime('%d %b %Y, %I:%M %p')
                 ]
             }
             stats_df = pd.DataFrame(stats)
@@ -161,7 +162,7 @@ class ReportGenerator:
         elements.append(Spacer(1, 40))
         elements.append(Paragraph("Smart Course Allocation Report", title_style))
         elements.append(Paragraph(
-            f"Generated on {datetime.now().strftime('%d %B %Y, %I:%M %p')}",
+            f"Generated on {datetime.now(IST).strftime('%d %B %Y, %I:%M %p')}",
             subtitle_style
         ))
         elements.append(Spacer(1, 20))

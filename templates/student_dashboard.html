@@ -1098,7 +1098,11 @@
         {% else %}
         <!-- New user empty state -->
         <div class="card" style="padding: 2rem; text-align: center;">
-            <div style="font-size: 2.5rem; margin-bottom: 1rem;">👋</div>
+            <div style="margin-bottom: 1rem; color: #3b82f6;">
+                <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
             <h4 style="margin: 0 0 0.5rem;">Welcome!</h4>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
                 Select your preferred courses on the left and submit to get started.
@@ -1220,26 +1224,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            // Fetch live seat preview
-            fetch('{{ url_for("get_course_seats") }}')
-                .then(res => res.json())
-                .then(data => {
-                    const selects = document.querySelectorAll('select[name="preferences"]');
-                    selects.forEach(sel => {
-                        Array.from(sel.options).forEach(opt => {
-                            if (opt.value && data[opt.value]) {
-                                const seats = data[opt.value];
-                                // Append seat count to the display text but keep value same
-                                // Format: Course Name (X/Y seats remaining)
-                                if (!opt.text.includes('seats')) {
-                                    opt.text = `${opt.value} (${seats.remaining}/${seats.total} seats remaining)`;
-                                }
-                            }
-                        });
-                    });
-                })
-                .catch(err => console.error('Failed to load seat data', err));
-
             // Attach modal trigger to form submit
             const prefForm = document.getElementById('prefForm');
             if (prefForm) {
