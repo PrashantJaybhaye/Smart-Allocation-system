@@ -39,7 +39,20 @@ if not app.config['SECRET_KEY']:
         # Generate a random one if missing in prod (safer than hardcoded)
         app.config['SECRET_KEY'] = os.urandom(24).hex()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    # Fix for SQLAlchemy 1.4+ which deprecated 'postgres://' in favor of 'postgresql://'
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
+else:
+    # Free deployment fallback or local development fallback
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'smart_allocation_production.db')
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 app.config['OUTPUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
 
