@@ -1295,6 +1295,65 @@
                 </div>
             </div>
 
+            <!-- Results Visibility -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <div class="s-card-icon blue">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </div>
+                    <span class="s-card-title">Results Visibility</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="status-chip {{ 'flexible' if show_results else 'strict' }}">
+                        <span class="dot"></span>
+                        {{ 'Published' if show_results else 'Hidden' }}
+                    </div>
+                    <p class="s-card-desc">
+                        {{ 'Students can view their allocation results.' if show_results else 'Allocation results are hidden from students.' }}
+                    </p>
+                </div>
+                <div class="s-card-footer">
+                    <form action="{{ url_for('toggle_results') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="s-btn {{ 's-btn-outline' if show_results else 's-btn-blue' }}">
+                            {{ 'Hide Results' if show_results else 'Publish Results' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Registration Access -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <div class="s-card-icon blue">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    </div>
+                    <span class="s-card-title">Registration Access</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="status-chip {{ 'flexible' if allow_registration else 'strict' }}">
+                        <span class="dot"></span>
+                        {{ 'Open' if allow_registration else 'Closed' }}
+                    </div>
+                    <p class="s-card-desc">
+                        {{ 'New students can register to the system.' if allow_registration else 'New account registration disabled.' }}
+                    </p>
+                </div>
+                <div class="s-card-footer">
+                    <form action="{{ url_for('toggle_registration') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="s-btn {{ 's-btn-outline' if allow_registration else 's-btn-blue' }}">
+                            {{ 'Close Registration' if allow_registration else 'Open Registration' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Wipe Students -->
             <div class="s-card">
                 <div class="s-card-header">

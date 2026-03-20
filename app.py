@@ -102,6 +102,9 @@ def login():
 @app.route('/send_otp', methods=['POST'])
 @limiter.limit("5 per hour")
 def send_otp():
+    if get_config('allow_registration', 'true').lower() != 'true':
+        return jsonify({'success': False, 'message': 'New registration is currently closed.'}), 403
+
     email = request.json.get('email')
     if not email:
         return jsonify({'success': False, 'message': 'Email is required'}), 400
@@ -188,6 +191,10 @@ def verify_otp_async():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if get_config('allow_registration', 'true').lower() != 'true':
+        flash('New student registration is currently closed.', 'error')
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         # Sanitization
         username = request.form.get('username', '').strip()
@@ -336,6 +343,8 @@ def index():
 @login_required
 def dashboard():
     allow_repref = get_config('allow_repref', 'false').lower() == 'true'
+    show_results = get_config('show_results', 'false').lower() == 'true'
+    allow_registration = get_config('allow_registration', 'true').lower() == 'true'
     notices = Notice.query.order_by(Notice.created_at.desc()).all()
     
     allocation_start = get_config('allocation_start', '')
@@ -348,6 +357,8 @@ def dashboard():
                                students=students, 
                                courses=courses, 
                                allow_repref=allow_repref,
+                               show_results=show_results,
+                               allow_registration=allow_registration,
                                notices=notices,
                                allocation_start=allocation_start,
                                allocation_end=allocation_end)
@@ -402,6 +413,7 @@ def dashboard():
                                window_state=window_state,
                                allocation_start=allocation_start,
                                allocation_end=allocation_end,
+                               show_results=show_results,
                                now=now.isoformat())
 
 @app.route('/submit_preferences', methods=['POST'])
@@ -893,6 +905,34 @@ def download_file(type):
     if os.path.exists(path):
         return send_file(path, as_attachment=True)
     return "File not found. Please run allocation first.", 404
+
+@app.route('/admin/toggle_results', methods=['POST'])
+@login_required
+def toggle_results():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    current_val = get_config('show_results', 'false')
+    new_val = 'true' if current_val == 'false' else 'false'
+    set_config('show_results', new_val)
+    
+    status = "published" if new_val == 'true' else "hidden"
+    flash(f'Allocation results are now {status} to students!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/admin/toggle_registration', methods=['POST'])
+@login_required
+def toggle_registration():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
+    
+    current_val = get_config('allow_registration', 'true')
+    new_val = 'false' if current_val == 'true' else 'true'
+    set_config('allow_registration', new_val)
+    
+    status = "open" if new_val == 'true' else "closed"
+    flash(f'New student registration is now {status}.', 'success')
+    return redirect(url_for('dashboard'))
 
 @app.route('/admin/toggle_repref', methods=['POST'])
 @login_required
